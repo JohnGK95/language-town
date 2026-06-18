@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Study | Language Village</title>
+
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+
+  <body>
+    <header class="top-bar">
+      <div>
+        <h1>Study Words</h1>
+        <p>Review vocabulary to earn XP and resources.</p>
+      </div>
+
+      <nav>
+        <a href="index.html">Home</a>
+        <a href="vocab.html">Vocabulary</a>
+        <a href="study.html">Study</a>
+        <a href="village.html">Village</a>
+      </nav>
+    </header>
+
+    <main class="page">
+      <section class="card study-card">
+        <h2 id="study-word">No words yet</h2>
+
+        <p id="study-pronunciation"></p>
+        <p id="study-meaning" class="hidden"></p>
+
+        <div id="study-example" class="hidden example-box"></div>
+
+        <div class="button-row">
+          <button id="show-answer-btn">Show Answer</button>
+          <button id="forgot-btn" class="hidden">Forgot</button>
+          <button id="hard-btn" class="hidden">Hard</button>
+          <button id="easy-btn" class="hidden">Easy</button>
+        </div>
+
+        <p id="study-message"></p>
+      </section>
+    </main>
+
+    <script src="js/state.js"></script>
+    <script src="js/study.js"></script>
+  </body>
+</html>

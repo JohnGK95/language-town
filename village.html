@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Village | Language Village</title>
+
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+
+  <body>
+    <header class="top-bar">
+      <div>
+        <h1>Your Village</h1>
+        <p>Spend learning rewards to upgrade your town.</p>
+      </div>
+
+      <nav>
+        <a href="index.html">Home</a>
+        <a href="vocab.html">Vocabulary</a>
+        <a href="study.html">Study</a>
+        <a href="village.html">Village</a>
+      </nav>
+    </header>
+
+    <main class="page">
+      <section class="card village-hud">
+        <strong>🪙 Coins: <span id="coins">0</span></strong>
+        <strong>📚 Knowledge: <span id="knowledge">0</span></strong>
+        <strong>🪵 Wood: <span id="wood">0</span></strong>
+        <strong>🎭 Culture: <span id="culture">0</span></strong>
+        <strong
+          >👥 Population: <span id="current-population">0</span> /
+          <span id="population-cap">0</span></strong
+        >
+        <strong
+          >📈 Next Citizen: <span id="next-citizen-progress">0</span></strong
+        >
+      </section>
+
+      <section class="card build-controls">
+        <h2>Build Mode</h2>
+
+        <div class="button-row">
+          <button id="toggle-build-mode-btn">Enter Build Mode</button>
+          <button id="clear-placements-btn">Clear Placed Items</button>
+        </div>
+
+        <p id="build-mode-message">Build mode is off.</p>
+      </section>
+
+      <section class="village-map" id="village-map"></section>
+    </main>
+
+    <div class="modal hidden" id="building-modal">
+      <div class="modal-content">
+        <button class="close-button" id="close-modal">X</button>
+
+        <h2 id="modal-building-name"></h2>
+        <p id="modal-owner"></p>
+        <p id="modal-dialogue"></p>
+
+        <hr />
+
+        <p>Level: <strong id="modal-building-level"></strong></p>
+        <p id="modal-upgrade-cost"></p>
+
+        <button id="upgrade-building-btn">Upgrade Building</button>
+        <div id="market-actions" class="hidden">
+          <hr />
+          <h3>Market Trade</h3>
+          <p>Trade coins for wood.</p>
+
+          <button id="buy-wood-btn">Buy 10 Wood for 25 Coins</button>
+        </div>
+        <p id="modal-message"></p>
+      </div>
+    </div>
+
+    <div class="modal hidden" id="build-modal">
+      <div class="modal-content">
+        <button class="close-button" id="close-build-modal">X</button>
+
+        <h2>Build Here</h2>
+        <p>Choose something to place on this tile.</p>
+
+        <div class="button-row">
+          <button onclick="placeItem('tree')">Tree</button>
+          <button onclick="placeItem('house')">House</button>
+          <button onclick="placeItem('garden')">Garden</button>
+          <button onclick="placeItem('path')">Path</button>
+        </div>
+
+        <p id="build-modal-message"></p>
+      </div>
+    </div>
+    <div class="modal hidden" id="house-modal">
+      <div class="modal-content">
+        <button class="close-button" id="close-house-modal">X</button>
+
+        <h2>House</h2>
+
+        <p>
+          Level:
+          <strong id="house-level"></strong>
+        </p>
+
+        <p>Population Bonus: +<strong id="house-population"></strong></p>
+
+        <p id="house-upgrade-cost"></p>
+
+        <button id="upgrade-house-btn">Upgrade House</button>
+
+        <p id="house-message"></p>
+      </div>
+    </div>
+    <script src="js/state.js"></script>
+    <script src="js/village.js"></script>
+  </body>
+</html>

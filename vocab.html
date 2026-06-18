@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vocabulary | Language Village</title>
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+
+  <body>
+    <header class="top-bar">
+      <div>
+        <h1>Vocabulary Bank</h1>
+        <p>Add and manage your study words.</p>
+      </div>
+
+      <nav>
+        <a href="index.html">Home</a>
+        <a href="vocab.html">Vocabulary</a>
+        <a href="study.html">Study</a>
+        <a href="village.html">Village</a>
+      </nav>
+    </header>
+
+    <main class="page">
+      <section class="card">
+        <h2>Add New Word</h2>
+
+        <form id="vocab-form" class="vocab-form">
+          <input id="word" placeholder="Word" required />
+          <input id="pronunciation" placeholder="Pronunciation" />
+          <input id="meaning" placeholder="Meaning" required />
+          <input id="example" placeholder="Example sentence" />
+          <input
+            id="example-pronunciation"
+            placeholder="Sentence pronunciation"
+          />
+          <input id="example-meaning" placeholder="Sentence meaning" />
+          <input id="group" placeholder="Group, e.g. Food" />
+          <input id="tag" placeholder="Tag, e.g. B1, TOCFL, Travel" />
+          <textarea id="notes" placeholder="Notes"></textarea>
+
+          <button type="submit">Add Word</button>
+        </form>
+      </section>
+      <section class="card">
+        <h2>Import Vocabulary CSV</h2>
+
+        <p>
+          Upload a CSV file with these headers: word, pronunciation, meaning,
+          example sentence, pronunciation sentence, sentence meaning, group,
+          tag, notes
+        </p>
+
+        <input type="file" id="csv-file-input" accept=".csv" />
+
+        <p id="import-message"></p>
+      </section>
+      <section class="card hidden" id="edit-vocab-section">
+        <h2>Edit Word</h2>
+
+        <form id="edit-vocab-form" class="vocab-form">
+          <input id="edit-word" placeholder="Word" required />
+          <input id="edit-pronunciation" placeholder="Pronunciation" />
+          <input id="edit-meaning" placeholder="Meaning" required />
+          <input id="edit-example" placeholder="Example sentence" />
+          <input
+            id="edit-example-pronunciation"
+            placeholder="Sentence pronunciation"
+          />
+          <input id="edit-example-meaning" placeholder="Sentence meaning" />
+          <input id="edit-group" placeholder="Group" />
+          <input id="edit-tag" placeholder="Tag" />
+          <textarea id="edit-notes" placeholder="Notes"></textarea>
+
+          <div class="button-row">
+            <button type="submit">Save Changes</button>
+            <button type="button" id="cancel-edit-btn">Cancel</button>
+          </div>
+        </form>
+      </section>
+      <section class="card">
+        <h2>Your Words</h2>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Word</th>
+                <th>Pronunciation</th>
+                <th>Meaning</th>
+                <th>Group</th>
+                <th>Tag</th>
+                <th>Delete</th>
+              </tr>
+            </thead>
+
+            <tbody id="vocab-table-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script src="js/state.js"></script>
+    <script src="js/vocab.js"></script>
+  </body>
+</html>
