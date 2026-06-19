@@ -282,11 +282,15 @@ function placeItem(type) {
   renderVillage();
 }
 function calculatePopulationCap(state) {
-  return state.village.placedItems
+  const basePopulationCap = 5;
+
+  const housePopulationCap = state.village.placedItems
     .filter((item) => item.type === "house")
     .reduce((total, house) => {
       return total + (house.level || 1);
     }, 0);
+
+  return basePopulationCap + housePopulationCap;
 }
 
 function renderPopulationCap() {
@@ -315,11 +319,11 @@ function toggleBuildMode() {
   const message = document.getElementById("build-mode-message");
 
   if (buildMode) {
-    button.textContent = "Exit Build Mode";
+    button.classList.add("active");
     message.textContent =
       "Build mode is on. Click an empty tile to place something. Click a placed item to remove it.";
   } else {
-    button.textContent = "Enter Build Mode";
+    button.classList.remove("active");
     message.textContent = "Build mode is off.";
   }
 
@@ -352,16 +356,32 @@ function renderTownName() {
 
 function saveTownName() {
   const state = getState();
-  const townNameInput = document.getElementById("town-name-input");
 
-  const newName = townNameInput.value.trim();
+  const input = document.getElementById("town-name-input");
+
+  const newName = input.value.trim();
 
   if (!newName) return;
 
   state.townName = newName;
 
   saveState(state);
+
   renderTownName();
+
+  document.getElementById("town-name-modal").classList.add("hidden");
+}
+function openTownNameModal() {
+  const state = getState();
+
+  document.getElementById("town-name-input").value =
+    state.townName || "Language Town";
+
+  document.getElementById("town-name-modal").classList.remove("hidden");
+}
+
+function closeTownNameModal() {
+  document.getElementById("town-name-modal").classList.add("hidden");
 }
 function openBuildingModal(buildingId) {
   const state = getState();
@@ -479,15 +499,20 @@ document.addEventListener("DOMContentLoaded", () => {
     .addEventListener("click", toggleBuildMode);
 
   document
-    .getElementById("clear-placements-btn")
-    .addEventListener("click", clearPlacedItems);
-  document
     .getElementById("close-house-modal")
     .addEventListener("click", closeHouseModal);
 
   document
     .getElementById("upgrade-house-btn")
     .addEventListener("click", upgradeHouse);
+  document
+    .getElementById("edit-town-name-btn")
+    .addEventListener("click", openTownNameModal);
+
+  document
+    .getElementById("close-town-name-modal")
+    .addEventListener("click", closeTownNameModal);
+
   document
     .getElementById("save-town-name-btn")
     .addEventListener("click", saveTownName);
