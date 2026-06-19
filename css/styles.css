@@ -335,3 +335,15 @@ td[contenteditable="true"]:focus {
   position: relative;
   z-index: 1;
 }
+.town-name-card {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.town-name-card input {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  font: inherit;
+  min-width: 240px;
+}

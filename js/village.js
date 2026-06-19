@@ -333,8 +333,36 @@ function clearPlacedItems() {
 
   saveState(state);
   renderVillage();
+  renderTownName();
+}
+function renderTownName() {
+  const state = getState();
+
+  const townNameDisplay = document.getElementById("town-name-display");
+  const townNameInput = document.getElementById("town-name-input");
+
+  if (townNameDisplay) {
+    townNameDisplay.textContent = state.townName || "Language Town";
+  }
+
+  if (townNameInput) {
+    townNameInput.value = state.townName || "Language Town";
+  }
 }
 
+function saveTownName() {
+  const state = getState();
+  const townNameInput = document.getElementById("town-name-input");
+
+  const newName = townNameInput.value.trim();
+
+  if (!newName) return;
+
+  state.townName = newName;
+
+  saveState(state);
+  renderTownName();
+}
 function openBuildingModal(buildingId) {
   const state = getState();
   const building = BUILDING_DATA[buildingId];
@@ -460,6 +488,9 @@ document.addEventListener("DOMContentLoaded", () => {
   document
     .getElementById("upgrade-house-btn")
     .addEventListener("click", upgradeHouse);
+  document
+    .getElementById("save-town-name-btn")
+    .addEventListener("click", saveTownName);
 });
 function openHouseModal(x, y) {
   const state = getState();

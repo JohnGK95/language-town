@@ -3,6 +3,7 @@
 // ===============================
 
 const DEFAULT_STATE = {
+  townName: "Language Town",
   player: {
     level: 1,
     xp: 0,
@@ -63,7 +64,9 @@ function loadState() {
 
   if (savedState) {
     const state = JSON.parse(savedState);
-
+    if (!state.townName) {
+      state.townName = "Language Town";
+    }
     if (!state.village.placedItems) {
       state.village.placedItems = [];
     }
