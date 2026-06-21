@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Quiz | Language Town</title>
+
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+
+  <body>
+    <header class="top-bar">
+      <div>
+        <h1>Quiz</h1>
+        <p>Test your vocabulary and earn rewards.</p>
+      </div>
+
+      <nav>
+        <a href="index.html">Home</a>
+        <a href="vocab.html">Vocabulary</a>
+        <a href="study.html">Study</a>
+        <a href="quiz.html">Quiz</a>
+        <a href="village.html">Village</a>
+        <a href="villagers.html">Villagers</a>
+      </nav>
+    </header>
+
+    <main class="page">
+      <section class="card" id="quiz-setup">
+        <h2>Quiz Setup</h2>
+
+        <label>
+          Number of Questions
+          <input id="question-count" type="number" min="1" value="5" />
+        </label>
+
+        <label>
+          Group
+          <select id="quiz-group">
+            <option value="all">All Words</option>
+          </select>
+        </label>
+
+        <label>
+          Quiz Direction
+          <select id="quiz-direction">
+            <option value="meaning-to-word">English → Mandarin</option>
+            <option value="word-to-meaning">Mandarin → English</option>
+          </select>
+        </label>
+
+        <button id="start-quiz-btn">Start Quiz</button>
+
+        <p id="quiz-setup-message"></p>
+      </section>
+
+      <section class="card hidden" id="quiz-card">
+        <p>
+          Question <span id="current-question-number">1</span> /
+          <span id="total-question-number">5</span>
+        </p>
+
+        <h2 id="quiz-question"></h2>
+
+        <div id="answer-options" class="answer-options"></div>
+
+        <p id="quiz-feedback"></p>
+
+        <div id="answer-details" class="answer-details hidden">
+          <h2 id="detail-word"></h2>
+          <p id="detail-pronunciation"></p>
+          <p id="detail-meaning"></p>
+          <p id="detail-mastery"></p>
+
+          <button id="next-question-btn" class="hidden">Next →</button>
+        </div>
+      </section>
+
+      <section class="card hidden" id="quiz-results">
+        <h2>Quiz Complete!</h2>
+
+        <p>Score: <strong id="quiz-score"></strong></p>
+        <p>Coins Earned: 🪙 <strong id="coins-earned"></strong></p>
+        <p>Knowledge Earned: 📚 <strong id="knowledge-earned"></strong></p>
+
+        <div class="button-row">
+          <button id="restart-quiz-btn">Take Another Quiz</button>
+          <a class="button" href="index.html">Return Home</a>
+        </div>
+      </section>
+    </main>
+
+    <script src="js/state.js"></script>
+    <script src="js/quiz.js"></script>
+  </body>
+</html>

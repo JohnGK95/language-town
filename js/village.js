@@ -104,6 +104,44 @@ const PLACEABLE_ITEMS = {
     className: "placed-path",
     buildCost: {},
   },
+  well: {
+    name: "Well",
+    icon: "🪣",
+    className: "placed-well",
+    buildCost: {
+      coins: 40,
+      wood: 10,
+    },
+  },
+
+  farm: {
+    name: "Farm",
+    icon: "🌾",
+    className: "placed-farm",
+    buildCost: {
+      coins: 75,
+      wood: 25,
+    },
+  },
+
+  shrine: {
+    name: "Shrine",
+    icon: "⛩️",
+    className: "placed-shrine",
+    buildCost: {
+      coins: 100,
+      knowledge: 50,
+    },
+  },
+
+  bench: {
+    name: "Bench",
+    icon: "🪑",
+    className: "placed-bench",
+    buildCost: {
+      wood: 5,
+    },
+  },
 };
 
 let selectedBuildingId = null;

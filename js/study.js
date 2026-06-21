@@ -88,15 +88,15 @@ function completeReview(difficulty) {
   }
 
   if (difficulty === "hard") {
-    state.player.xp += 2;
+    state.player.xp += 0;
     state.resources.knowledge += 1;
     state.resources.coins += 1;
   }
 
   if (difficulty === "easy") {
-    state.player.xp += 5;
-    state.resources.knowledge += 3;
-    state.resources.coins += 2;
+    state.player.xp += 2;
+    state.resources.knowledge += 1;
+    state.resources.coins += 1;
     if (!state.progress.easyWordCounter) {
       state.progress.easyWordCounter = 0;
     }

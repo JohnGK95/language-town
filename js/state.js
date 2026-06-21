@@ -4,6 +4,7 @@
 
 const DEFAULT_STATE = {
   townName: "Language Town",
+
   player: {
     level: 1,
     xp: 0,
@@ -26,17 +27,104 @@ const DEFAULT_STATE = {
 
   vocab: [],
 
+  villagers: [
+    {
+      id: "mayor_elian",
+      name: "Mayor Elian",
+      role: "Mayor",
+      building: "Town Hall",
+      relationshipLevel: 1,
+      relationshipPoints: 0,
+      unlocked: true,
+      dialogue:
+        "Welcome, founder. A town grows when its people and language grow together.",
+      focus: "Community and town growth",
+    },
+    {
+      id: "archivist_mina",
+      name: "Archivist Mina",
+      role: "Librarian",
+      building: "Library",
+      relationshipLevel: 1,
+      relationshipPoints: 0,
+      unlocked: true,
+      dialogue: "Every word you learn becomes part of our shared archive.",
+      focus: "Vocabulary and study tools",
+    },
+    {
+      id: "teacher_lian",
+      name: "Teacher Lian",
+      role: "Mandarin Teacher",
+      building: "School",
+      relationshipLevel: 1,
+      relationshipPoints: 0,
+      unlocked: true,
+      dialogue:
+        "Practice turns knowledge into skill. Let us keep improving together.",
+      focus: "Pronunciation, grammar, writing, and reading",
+    },
+    {
+      id: "merchant_ren",
+      name: "Merchant Ren",
+      role: "Merchant",
+      building: "Market",
+      relationshipLevel: 1,
+      relationshipPoints: 0,
+      unlocked: true,
+      dialogue: "Bring me coins, and I will help your town prosper.",
+      focus: "Shopping, trade, and economy",
+    },
+    {
+      id: "foreman_rowan",
+      name: "Foreman Rowan",
+      role: "Lumber Mill Foreman",
+      building: "Lumber Mill",
+      relationshipLevel: 1,
+      relationshipPoints: 0,
+      unlocked: true,
+      dialogue:
+        "Strong buildings need strong timber. Keep learning, and we will keep building.",
+      focus: "Construction and materials",
+    },
+    {
+      id: "builder_tao",
+      name: "Builder Tao",
+      role: "Builder",
+      building: "Build Mode",
+      relationshipLevel: 1,
+      relationshipPoints: 0,
+      unlocked: false,
+      unlockLevel: 2,
+      dialogue: "People need homes before they can settle down.",
+      focus: "Housing and construction",
+    },
+    {
+      id: "farmer_mei",
+      name: "Farmer Mei",
+      role: "Farmer",
+      building: "Farm",
+      relationshipLevel: 1,
+      relationshipPoints: 0,
+      unlocked: false,
+      unlockLevel: 3,
+      dialogue: "The land teaches us patience, and every crop has a story.",
+      focus: "Food, farming, and Taiwanese ingredients",
+    },
+  ],
+
   village: {
     placedItems: [],
+
+    population: {
+      current: 0,
+      learnedWordsSinceLastCitizen: 0,
+      nextCitizenRequirement: 25,
+    },
+
     buildings: {
       townHall: {
         name: "Town Hall",
         level: 1,
-      },
-      population: {
-        current: 0,
-        learnedWordsSinceLastCitizen: 0,
-        nextCitizenRequirement: 25,
       },
       library: {
         name: "Library",
@@ -64,9 +152,19 @@ function loadState() {
 
   if (savedState) {
     const state = JSON.parse(savedState);
+
     if (!state.townName) {
       state.townName = "Language Town";
     }
+
+    if (!state.villagers || state.villagers.length === 0) {
+      state.villagers = DEFAULT_STATE.villagers;
+    }
+
+    if (!state.village) {
+      state.village = DEFAULT_STATE.village;
+    }
+
     if (!state.village.placedItems) {
       state.village.placedItems = [];
     }
@@ -79,6 +177,10 @@ function loadState() {
       };
     }
 
+    if (!state.village.buildings) {
+      state.village.buildings = DEFAULT_STATE.village.buildings;
+    }
+
     if (!state.village.buildings.lumberMill) {
       state.village.buildings.lumberMill = {
         name: "Lumber Mill",
@@ -86,6 +188,7 @@ function loadState() {
       };
     }
 
+    saveState(state);
     return state;
   }
 
@@ -176,7 +279,6 @@ function renderState() {
 
   if (xpFillElement) {
     const xpPercent = (state.player.xp / state.player.xpToNextLevel) * 100;
-
     xpFillElement.style.width = `${xpPercent}%`;
   }
 
@@ -200,6 +302,7 @@ function renderState() {
     const learnedCount = state.vocab.filter(
       (word) => word.correctCount > 0,
     ).length;
+
     wordsLearnedElement.textContent = learnedCount;
   }
 
