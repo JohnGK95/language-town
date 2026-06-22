@@ -46,10 +46,38 @@
         >
       </section>
 
-      <div class="map-wrapper">
-        <button id="toggle-build-mode-btn" class="hammer-button">🔨</button>
-        <section class="village-map" id="village-map"></section>
+      <div class="village-layout">
+        <div class="map-wrapper">
+          <button id="toggle-build-mode-btn" class="hammer-button">🔨</button>
+          <section class="village-map" id="village-map"></section>
+        </div>
+
+        <aside id="builder-menu" class="builder-menu hidden">
+          <h3>Builder Menu</h3>
+
+          <button id="builder-build-btn">Build</button>
+          <button id="builder-move-btn">Move</button>
+          <button id="builder-bulldoze-btn">Bulldoze</button>
+
+          <div id="build-options" class="build-options hidden">
+            <h4>Build New</h4>
+
+            <button onclick="selectBuildItem('tree')">🌳 Tree</button>
+            <button onclick="selectBuildItem('house')">🏠 House</button>
+            <button onclick="selectBuildItem('garden')">🌷 Garden</button>
+            <button onclick="selectBuildItem('path')">🟫 Path</button>
+            <button onclick="selectBuildItem('farm')">🌾 Farm</button>
+            <button onclick="selectBuildItem('well')">🪣 Well</button>
+            <button onclick="selectBuildItem('bench')">🪑 Bench</button>
+          </div>
+
+          <p id="builder-menu-message">Choose a builder action.</p>
+        </aside>
       </div>
+
+      <p id="build-mode-message" class="build-mode-message">
+        Build mode is off.
+      </p>
 
       <p id="build-mode-message" class="build-mode-message">
         Build mode is off.

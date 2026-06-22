@@ -196,8 +196,8 @@ td[contenteditable="true"]:focus {
 
 .village-map {
   display: grid;
-  grid-template-columns: repeat(16, 44px);
-  grid-template-rows: repeat(12, 44px);
+  grid-template-columns: repeat(30, 30px);
+  grid-template-rows: repeat(20, 30px);
   gap: 4px;
 
   background: #8fbf6a;
@@ -555,4 +555,53 @@ td[contenteditable="true"]:focus {
 #study-mastery {
   font-size: 20px;
   font-weight: bold;
+}
+.moving-building {
+  outline: 3px dashed white;
+  opacity: 0.75;
+}
+.village-layout {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.builder-menu {
+  width: 220px;
+  background: white;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+.builder-menu.hidden {
+  display: none;
+}
+
+.builder-menu button,
+.build-options button {
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.build-options {
+  margin-top: 12px;
+}
+
+.build-options.hidden {
+  display: none;
+}
+
+.builder-action-active {
+  outline: 3px solid #6b8f4e;
+}
+.locked-map-tile {
+  background: #777;
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.locked-map-tile:hover {
+  background: #777;
 }

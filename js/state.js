@@ -125,22 +125,42 @@ const DEFAULT_STATE = {
       townHall: {
         name: "Town Hall",
         level: 1,
+        x: 7,
+        y: 2,
+        width: 3,
+        height: 2,
       },
       library: {
         name: "Library",
         level: 1,
+        x: 3,
+        y: 3,
+        width: 2,
+        height: 2,
       },
       market: {
         name: "Market",
         level: 1,
+        x: 12,
+        y: 4,
+        width: 2,
+        height: 2,
       },
       lumberMill: {
         name: "Lumber Mill",
         level: 1,
+        x: 13,
+        y: 8,
+        width: 2,
+        height: 2,
       },
       school: {
         name: "School",
         level: 1,
+        x: 6,
+        y: 7,
+        width: 3,
+        height: 2,
       },
     },
   },
@@ -187,7 +207,20 @@ function loadState() {
         level: 1,
       };
     }
+    Object.keys(DEFAULT_STATE.village.buildings).forEach((buildingId) => {
+      if (!state.village.buildings[buildingId]) {
+        state.village.buildings[buildingId] =
+          DEFAULT_STATE.village.buildings[buildingId];
+      }
 
+      const defaultBuilding = DEFAULT_STATE.village.buildings[buildingId];
+      const savedBuilding = state.village.buildings[buildingId];
+
+      if (!savedBuilding.x) savedBuilding.x = defaultBuilding.x;
+      if (!savedBuilding.y) savedBuilding.y = defaultBuilding.y;
+      if (!savedBuilding.width) savedBuilding.width = defaultBuilding.width;
+      if (!savedBuilding.height) savedBuilding.height = defaultBuilding.height;
+    });
     saveState(state);
     return state;
   }
