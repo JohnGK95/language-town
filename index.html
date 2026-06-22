@@ -42,7 +42,7 @@
           <div class="xp-bar">
             <div class="xp-fill" id="xp-fill"></div>
           </div>
-
+          <button id="open-level-modal-btn">View Level Requirements</button>
           <p>
             <span id="xp-count">0</span>
             / 100 XP
@@ -129,7 +129,25 @@
         </ul>
       </section>
     </main>
+    <div class="modal hidden" id="level-modal">
+      <div class="modal-content level-modal-content">
+        <button class="close-button" id="close-level-modal-btn">X</button>
 
+        <h2 id="level-modal-title">Level Requirements</h2>
+
+        <div id="level-requirements-list"></div>
+
+        <hr />
+
+        <h3>Unlocks</h3>
+        <div id="level-unlocks-list"></div>
+
+        <button id="level-up-btn" class="hidden">Level Up</button>
+
+        <p id="level-modal-message"></p>
+      </div>
+    </div>
     <script src="js/state.js"></script>
+    <script src="js/levels.js"></script>
   </body>
 </html>

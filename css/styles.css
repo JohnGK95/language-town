@@ -605,3 +605,24 @@ td[contenteditable="true"]:focus {
 .locked-map-tile:hover {
   background: #777;
 }
+.level-modal-content {
+  max-width: 520px;
+}
+
+.requirement-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #ddd;
+}
+
+.requirement-complete {
+  color: #2d6a4f;
+  font-weight: bold;
+}
+
+.requirement-incomplete {
+  color: #9d0208;
+  font-weight: bold;
+}

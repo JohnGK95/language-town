@@ -495,7 +495,7 @@ function moveBuildingToTile(buildingId, x, y) {
   if (!building) return;
 
   if (!canPlaceBuilding(buildingId, x, y)) {
-    document.getElementById("build-mode-message").textContent =
+    document.getElementById("build-menu-message").textContent =
       "That building cannot be placed there.";
 
     return;
@@ -508,21 +508,16 @@ function moveBuildingToTile(buildingId, x, y) {
 
   movingBuildingId = null;
 
-  document.getElementById("build-mode-message").textContent = "Building moved.";
+  document.getElementById("build-menu-message").textContent = "Building moved.";
 
   renderVillage();
 }
 
 function canPlaceBuilding(buildingId, x, y) {
-  for (let tileY = y; tileY < y + building.height; tileY++) {
-    for (let tileX = x; tileX < x + building.width; tileX++) {
-      if (!isTileUnlocked(tileX, tileY)) {
-        return false;
-      }
-    }
-  }
   const state = getState();
   const building = state.village.buildings[buildingId];
+
+  if (!building) return false;
 
   const width = building.width;
   const height = building.height;
@@ -533,6 +528,10 @@ function canPlaceBuilding(buildingId, x, y) {
 
   for (let tileY = y; tileY < y + height; tileY++) {
     for (let tileX = x; tileX < x + width; tileX++) {
+      if (!isTileUnlocked(tileX, tileY)) {
+        return false;
+      }
+
       if (isTileOccupiedForMove(tileX, tileY, buildingId)) {
         return false;
       }

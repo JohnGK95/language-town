@@ -215,7 +215,10 @@ function importCSV(event) {
         pronunciation: rowData.pronunciation || "",
         meaning: rowData.meaning || "",
         example: rowData["example sentence"] || "",
-        examplePronunciation: rowData["pronunciation sentence"] || "",
+        examplePronunciation:
+          rowData["pronunciation sentence"] ||
+          rowData["sentence pronunciation"] ||
+          "",
         exampleMeaning: rowData["sentence meaning"] || "",
         group: rowData.group || "",
         tag: rowData.tag || "",
