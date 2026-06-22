@@ -27,11 +27,26 @@
     </header>
 
     <main class="page">
+      <section class="card study-settings">
+        <h2>Study Settings</h2>
+
+        <label>
+          Group
+          <select id="study-group">
+            <option value="all">All Words</option>
+          </select>
+        </label>
+
+        <button id="start-study-btn">Start Studying</button>
+
+        <p id="study-settings-message"></p>
+      </section>
       <section class="card study-card">
         <h2 id="study-word">No words yet</h2>
 
         <p id="study-pronunciation"></p>
         <p id="study-meaning" class="hidden"></p>
+        <p id="study-mastery" class="hidden"></p>
 
         <div id="study-example" class="hidden example-box"></div>
 

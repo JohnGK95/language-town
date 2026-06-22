@@ -1,5 +1,62 @@
 let currentWordIndex = 0;
 let previousWordIndex = null;
+let currentStudyWords = [];
+
+function populateStudyGroupDropdown() {
+  const state = getState();
+  const groupSelect = document.getElementById("study-group");
+
+  if (!groupSelect) return;
+
+  const groups = [
+    ...new Set(
+      state.vocab
+        .map((word) => word.group)
+        .filter((group) => group && group.trim() !== ""),
+    ),
+  ];
+
+  groups.forEach((group) => {
+    const option = document.createElement("option");
+    option.value = group;
+    option.textContent = group;
+    groupSelect.appendChild(option);
+  });
+}
+
+function getMasteryLabel(word) {
+  const correct = word.quizCorrectCount || 0;
+
+  if (correct >= 5) return "Mastered ⭐⭐⭐⭐";
+  if (correct >= 3) return "Learned ⭐⭐⭐";
+  if (correct >= 1) return "Familiar ⭐⭐";
+
+  return "New ⭐";
+}
+
+function startStudySession() {
+  const state = getState();
+  const selectedGroup = document.getElementById("study-group").value;
+  const message = document.getElementById("study-settings-message");
+
+  if (selectedGroup === "all") {
+    currentStudyWords = state.vocab;
+  } else {
+    currentStudyWords = state.vocab.filter((word) => {
+      return word.group === selectedGroup;
+    });
+  }
+
+  if (currentStudyWords.length === 0) {
+    message.textContent = "No words found for this group.";
+    return;
+  }
+
+  message.textContent = `Studying ${currentStudyWords.length} word(s).`;
+  previousWordIndex = null;
+
+  loadStudyWord();
+}
 
 function getRandomWordIndex(vocabLength) {
   if (vocabLength === 1) return 0;
@@ -14,11 +71,10 @@ function getRandomWordIndex(vocabLength) {
 }
 
 function loadStudyWord() {
-  const state = getState();
-
   const studyWord = document.getElementById("study-word");
   const pronunciation = document.getElementById("study-pronunciation");
   const meaning = document.getElementById("study-meaning");
+  const mastery = document.getElementById("study-mastery");
   const example = document.getElementById("study-example");
 
   const showAnswerBtn = document.getElementById("show-answer-btn");
@@ -26,7 +82,12 @@ function loadStudyWord() {
   const hardBtn = document.getElementById("hard-btn");
   const easyBtn = document.getElementById("easy-btn");
 
-  if (state.vocab.length === 0) {
+  if (currentStudyWords.length === 0) {
+    const state = getState();
+    currentStudyWords = state.vocab;
+  }
+
+  if (currentStudyWords.length === 0) {
     studyWord.textContent = "No vocabulary yet";
     pronunciation.textContent = "";
     meaning.textContent = "Go add words first.";
@@ -40,23 +101,29 @@ function loadStudyWord() {
     return;
   }
 
-  currentWordIndex = getRandomWordIndex(state.vocab.length);
+  currentWordIndex = getRandomWordIndex(currentStudyWords.length);
   previousWordIndex = currentWordIndex;
 
-  const currentWord = state.vocab[currentWordIndex];
+  const currentWord = currentStudyWords[currentWordIndex];
 
   studyWord.textContent = currentWord.word;
   pronunciation.textContent = currentWord.pronunciation || "";
   meaning.textContent = currentWord.meaning || "";
+  mastery.textContent = getMasteryLabel(currentWord);
 
   example.innerHTML = `
-    <strong>Example:</strong><br>
-    ${currentWord.example || "No example sentence yet."}<br>
-    <em>${currentWord.examplePronunciation || ""}</em><br>
-    ${currentWord.exampleMeaning || ""}
+    <strong>Example Sentence:</strong><br>
+    ${currentWord.example || "No example sentence yet."}<br><br>
+
+    <strong>Sentence Pronunciation:</strong><br>
+    ${currentWord.examplePronunciation || "No sentence pronunciation yet."}<br><br>
+
+    <strong>Sentence Meaning:</strong><br>
+    ${currentWord.exampleMeaning || "No sentence meaning yet."}
   `;
 
   meaning.classList.add("hidden");
+  mastery.classList.add("hidden");
   example.classList.add("hidden");
 
   showAnswerBtn.classList.remove("hidden");
@@ -67,6 +134,7 @@ function loadStudyWord() {
 
 function showAnswer() {
   document.getElementById("study-meaning").classList.remove("hidden");
+  document.getElementById("study-mastery").classList.remove("hidden");
   document.getElementById("study-example").classList.remove("hidden");
 
   document.getElementById("show-answer-btn").classList.add("hidden");
@@ -77,9 +145,17 @@ function showAnswer() {
 
 function completeReview(difficulty) {
   const state = getState();
-  const word = state.vocab[currentWordIndex];
+  const currentWord = currentStudyWords[currentWordIndex];
 
-  word.timesStudied += 1;
+  const savedWord = state.vocab.find((word) => {
+    return (
+      word.word === currentWord.word && word.meaning === currentWord.meaning
+    );
+  });
+
+  if (!savedWord) return;
+
+  savedWord.timesStudied += 1;
   state.progress.studiedToday += 1;
   state.progress.reviewsCompleted += 1;
 
@@ -88,15 +164,14 @@ function completeReview(difficulty) {
   }
 
   if (difficulty === "hard") {
-    state.player.xp += 0;
-    state.resources.knowledge += 1;
+    state.resources.knowledge += 2;
     state.resources.coins += 1;
   }
 
   if (difficulty === "easy") {
-    state.player.xp += 2;
-    state.resources.knowledge += 1;
-    state.resources.coins += 1;
+    state.resources.knowledge += 3;
+    state.resources.coins += 2;
+
     if (!state.progress.easyWordCounter) {
       state.progress.easyWordCounter = 0;
     }
@@ -108,40 +183,21 @@ function completeReview(difficulty) {
       state.progress.easyWordCounter = 0;
     }
 
-    if (word.correctCount === 0) {
+    if (savedWord.correctCount === 0) {
       state.progress.wordsLearned += 1;
       handleNewLearnedWord(state);
     }
 
-    word.correctCount += 1;
-  }
-
-  while (state.player.xp >= state.player.xpToNextLevel) {
-    state.player.xp -= state.player.xpToNextLevel;
-    state.player.level += 1;
-    state.player.xpToNextLevel += 50;
+    savedWord.correctCount += 1;
   }
 
   saveState(state);
+
+  currentStudyWords[currentWordIndex] = savedWord;
+
   loadStudyWord();
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  loadStudyWord();
-
-  document
-    .getElementById("show-answer-btn")
-    .addEventListener("click", showAnswer);
-  document
-    .getElementById("forgot-btn")
-    .addEventListener("click", () => completeReview("forgot"));
-  document
-    .getElementById("hard-btn")
-    .addEventListener("click", () => completeReview("hard"));
-  document
-    .getElementById("easy-btn")
-    .addEventListener("click", () => completeReview("easy"));
-});
 function handleNewLearnedWord(state) {
   if (!state.village.population) {
     state.village.population = {
@@ -172,11 +228,15 @@ function handleNewLearnedWord(state) {
 }
 
 function calculateStudyPopulationCap(state) {
-  return state.village.placedItems
+  const basePopulationCap = 5;
+
+  const housePopulationCap = state.village.placedItems
     .filter((item) => item.type === "house")
     .reduce((total, house) => {
       return total + (house.level || 1);
     }, 0);
+
+  return basePopulationCap + housePopulationCap;
 }
 
 function getStudyNextCitizenRequirement(currentPopulation) {
@@ -184,3 +244,31 @@ function getStudyNextCitizenRequirement(currentPopulation) {
   if (currentPopulation === 1) return 50;
   return 100;
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  populateStudyGroupDropdown();
+
+  const startStudyBtn = document.getElementById("start-study-btn");
+
+  if (startStudyBtn) {
+    startStudyBtn.addEventListener("click", startStudySession);
+  }
+
+  loadStudyWord();
+
+  document
+    .getElementById("show-answer-btn")
+    .addEventListener("click", showAnswer);
+
+  document
+    .getElementById("forgot-btn")
+    .addEventListener("click", () => completeReview("forgot"));
+
+  document
+    .getElementById("hard-btn")
+    .addEventListener("click", () => completeReview("hard"));
+
+  document
+    .getElementById("easy-btn")
+    .addEventListener("click", () => completeReview("easy"));
+});
