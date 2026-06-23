@@ -186,6 +186,34 @@ const PLACEABLE_ITEMS = {
   },
 };
 
+const CROP_DATA = {
+  rice: {
+    name: "Rice",
+    icon: "🍚",
+    unlockLevel: 3,
+  },
+  wheat: {
+    name: "Wheat",
+    icon: "🌾",
+    unlockLevel: 4,
+  },
+  soybean: {
+    name: "Soybean",
+    icon: "🫘",
+    unlockLevel: 5,
+  },
+  greenOnion: {
+    name: "Yilan Green Onion",
+    icon: "🧅",
+    unlockLevel: 6,
+  },
+  tea: {
+    name: "Tea",
+    icon: "🍵",
+    unlockLevel: 10,
+  },
+};
+
 function renderVillage() {
   const map = document.getElementById("village-map");
   const state = getState();
@@ -301,7 +329,141 @@ function renderBuildings() {
     map.appendChild(buildingElement);
   });
 }
+let selectedFarm = null;
 
+function getUnlockedCrops() {
+  const state = getState();
+  const level = state.player.level;
+
+  return Object.entries(CROP_DATA)
+    .filter(([, crop]) => level >= crop.unlockLevel)
+    .map(([cropId]) => cropId);
+}
+
+function openFarmModal(x, y) {
+  const state = getState();
+
+  const farm = state.village.placedItems.find((item) => {
+    return item.type === "farm" && item.x === x && item.y === y;
+  });
+
+  if (!farm) return;
+
+  if (!farm.level) farm.level = 1;
+  if (!farm.cropSlots) farm.cropSlots = [];
+
+  selectedFarm = { x, y };
+
+  document.getElementById("farm-level").textContent = farm.level;
+  document.getElementById("farm-slots").textContent = farm.level;
+
+  renderFarmCropSlots(farm);
+
+  document.getElementById("farm-message").textContent = "";
+  document.getElementById("farm-modal").classList.remove("hidden");
+
+  saveState(state);
+}
+
+function renderFarmCropSlots(farm) {
+  const container = document.getElementById("farm-crop-slots");
+  const unlockedCrops = getUnlockedCrops();
+
+  container.innerHTML = "";
+
+  for (let i = 0; i < farm.level; i++) {
+    const currentCrop = farm.cropSlots[i] || "";
+
+    const row = document.createElement("div");
+    row.classList.add("farm-slot-row");
+
+    row.innerHTML = `
+      <label>
+        Slot ${i + 1}
+        <select data-slot-index="${i}">
+          <option value="">Empty</option>
+          ${unlockedCrops
+            .map((cropId) => {
+              const crop = CROP_DATA[cropId];
+              return `
+                <option value="${cropId}" ${currentCrop === cropId ? "selected" : ""}>
+                  ${crop.icon} ${crop.name}
+                </option>
+              `;
+            })
+            .join("")}
+        </select>
+      </label>
+    `;
+
+    container.appendChild(row);
+  }
+
+  container.querySelectorAll("select").forEach((select) => {
+    select.addEventListener("change", updateFarmCropSlot);
+  });
+}
+
+function updateFarmCropSlot(event) {
+  if (!selectedFarm) return;
+
+  const state = getState();
+
+  const farm = state.village.placedItems.find((item) => {
+    return (
+      item.type === "farm" &&
+      item.x === selectedFarm.x &&
+      item.y === selectedFarm.y
+    );
+  });
+
+  if (!farm) return;
+
+  const slotIndex = Number(event.target.dataset.slotIndex);
+  const cropId = event.target.value;
+
+  farm.cropSlots[slotIndex] = cropId;
+
+  saveState(state);
+
+  document.getElementById("farm-message").textContent = "Crop selection saved.";
+}
+
+function collectCrops() {
+  if (!selectedFarm) return;
+
+  const state = getState();
+
+  const farm = state.village.placedItems.find((item) => {
+    return (
+      item.type === "farm" &&
+      item.x === selectedFarm.x &&
+      item.y === selectedFarm.y
+    );
+  });
+
+  if (!farm || !farm.cropSlots) return;
+
+  farm.cropSlots.forEach((cropId) => {
+    if (!cropId) return;
+
+    if (!state.resources[cropId]) {
+      state.resources[cropId] = 0;
+    }
+
+    state.resources[cropId] += 1;
+  });
+
+  saveState(state);
+  renderState();
+
+  document.getElementById("farm-message").textContent = "Crops collected!";
+}
+
+function closeFarmModal() {
+  selectedFarm = null;
+  document.getElementById("farm-modal").classList.add("hidden");
+}
 function renderPlacedItems(state) {
   const map = document.getElementById("village-map");
 
@@ -331,6 +493,11 @@ function renderPlacedItems(state) {
         if (item.type === "house") {
           openHouseModal(item.x, item.y);
         }
+
+        if (item.type === "farm") {
+          openFarmModal(item.x, item.y);
+        }
+
         return;
       }
 
@@ -446,7 +613,29 @@ function handleTileClick(x, y) {
     return;
   }
 }
+function renderBuildOptions() {
+  const buttons = document.querySelectorAll(".build-option-btn");
+
+  buttons.forEach((button) => {
+    const type = button.dataset.buildType;
+
+    if (!isBuildItemUnlocked(type)) {
+      button.classList.add("locked-build-option");
+      button.disabled = false;
+      button.title = "Locked";
+    } else {
+      button.classList.remove("locked-build-option");
+      button.disabled = false;
+      button.title = "";
+    }
+  });
+}
 function placeItemAtTile(type, x, y) {
+  if (!isBuildItemUnlocked(type)) {
+    document.getElementById("builder-menu-message").textContent =
+      `${PLACEABLE_ITEMS[type].name} is not unlocked yet.`;
+    return;
+  }
   if (!isTileUnlocked(x, y)) {
     document.getElementById("builder-menu-message").textContent =
       "This area is still locked.";
@@ -669,6 +858,7 @@ function toggleBuildMode() {
   if (buildMode) {
     button.classList.add("active");
     builderMenu.classList.remove("hidden");
+    renderBuildOptions();
     message.textContent = "Build mode is on.";
   } else {
     button.classList.remove("active");
@@ -708,8 +898,38 @@ function setBuilderAction(action) {
       "Click a placed item to remove it.";
   }
 }
+function isBuildItemUnlocked(type) {
+  const state = getState();
+  const level = state.player.level;
 
+  const unlockLevels = {
+    tree: 1,
+    garden: 1,
+    path: 1,
+    well: 1,
+    bench: 1,
+
+    house: 2,
+    farm: 3,
+    shrine: 7,
+  };
+
+  return level >= (unlockLevels[type] || 1);
+}
 function selectBuildItem(type) {
+  if (!isBuildItemUnlocked(type)) {
+    const unlockLevels = {
+      house: 2,
+      farm: 3,
+      shrine: 7,
+    };
+
+    document.getElementById("builder-menu-message").textContent =
+      `${PLACEABLE_ITEMS[type].name} unlocks at Level ${unlockLevels[type]}.`;
+
+    return;
+  }
+
   selectedBuildItem = type;
 
   document.getElementById("builder-menu-message").textContent =
@@ -741,15 +961,12 @@ function renderTownName() {
 
 function saveTownName() {
   const state = getState();
-
   const input = document.getElementById("town-name-input");
-
   const newName = input.value.trim();
 
   if (!newName) return;
 
   state.townName = newName;
-
   saveState(state);
 
   renderTownName();
@@ -864,6 +1081,7 @@ function upgradeSelectedBuilding() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  renderTownName();
   renderVillage();
   document
     .getElementById("builder-build-btn")
@@ -911,6 +1129,13 @@ document.addEventListener("DOMContentLoaded", () => {
   document
     .getElementById("save-town-name-btn")
     .addEventListener("click", saveTownName);
+  document
+    .getElementById("close-farm-modal")
+    .addEventListener("click", closeFarmModal);
+
+  document
+    .getElementById("collect-crops-btn")
+    .addEventListener("click", collectCrops);
 });
 function openHouseModal(x, y) {
   const state = getState();

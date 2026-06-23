@@ -32,21 +32,32 @@
 
       <section class="card player-card">
         <h2>Player</h2>
+        <div class="player-title">
+          <h2 id="player-name-display">Player</h2>
 
+          <button id="edit-player-name-btn" class="edit-town-button">✏️</button>
+        </div>
         <div class="level-box">
           <h3>
             Level
             <span id="player-level">1</span>
           </h3>
 
-          <div class="xp-bar">
-            <div class="xp-fill" id="xp-fill"></div>
+          <div class="xp-row">
+            <div class="xp-bar">
+              <div id="xp-fill"></div>
+            </div>
+
+            <button
+              id="open-level-modal-btn"
+              class="level-arrow-btn"
+              title="View Level Requirements"
+            >
+              ⬆️
+            </button>
           </div>
-          <button id="open-level-modal-btn">View Level Requirements</button>
-          <p>
-            <span id="xp-count">0</span>
-            / 100 XP
-          </p>
+
+          <p id="xp-count">0 / 100 XP</p>
         </div>
       </section>
 
@@ -145,6 +156,17 @@
         <button id="level-up-btn" class="hidden">Level Up</button>
 
         <p id="level-modal-message"></p>
+      </div>
+    </div>
+    <div class="modal hidden" id="player-name-modal">
+      <div class="modal-content">
+        <button class="close-button" id="close-player-name-modal">X</button>
+
+        <h2>Rename Player</h2>
+
+        <input id="player-name-input" placeholder="Player name" />
+
+        <button id="save-player-name-btn">Save</button>
       </div>
     </div>
     <script src="js/state.js"></script>

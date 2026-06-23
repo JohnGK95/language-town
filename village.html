@@ -44,6 +44,11 @@
         <strong
           >📈 Next Citizen: <span id="next-citizen-progress">0</span></strong
         >
+        <strong>🍚 Rice: <span id="rice">0</span></strong>
+        <strong>🌾 Wheat: <span id="wheat">0</span></strong>
+        <strong>🫘 Soybean: <span id="soybean">0</span></strong>
+        <strong>🧅 Green Onion: <span id="greenOnion">0</span></strong>
+        <strong>🍵 Tea: <span id="tea">0</span></strong>
       </section>
 
       <div class="village-layout">
@@ -62,13 +67,62 @@
           <div id="build-options" class="build-options hidden">
             <h4>Build New</h4>
 
-            <button onclick="selectBuildItem('tree')">🌳 Tree</button>
-            <button onclick="selectBuildItem('house')">🏠 House</button>
-            <button onclick="selectBuildItem('garden')">🌷 Garden</button>
-            <button onclick="selectBuildItem('path')">🟫 Path</button>
-            <button onclick="selectBuildItem('farm')">🌾 Farm</button>
-            <button onclick="selectBuildItem('well')">🪣 Well</button>
-            <button onclick="selectBuildItem('bench')">🪑 Bench</button>
+            <button
+              class="build-option-btn"
+              data-build-type="tree"
+              onclick="selectBuildItem('tree')"
+            >
+              🌳 Tree
+            </button>
+            <button
+              class="build-option-btn"
+              data-build-type="house"
+              onclick="selectBuildItem('house')"
+            >
+              🏠 House
+            </button>
+            <button
+              class="build-option-btn"
+              data-build-type="garden"
+              onclick="selectBuildItem('garden')"
+            >
+              🌷 Garden
+            </button>
+            <button
+              class="build-option-btn"
+              data-build-type="path"
+              onclick="selectBuildItem('path')"
+            >
+              🟫 Path
+            </button>
+            <button
+              class="build-option-btn"
+              data-build-type="farm"
+              onclick="selectBuildItem('farm')"
+            >
+              🌾 Farm
+            </button>
+            <button
+              class="build-option-btn"
+              data-build-type="well"
+              onclick="selectBuildItem('well')"
+            >
+              🪣 Well
+            </button>
+            <button
+              class="build-option-btn"
+              data-build-type="bench"
+              onclick="selectBuildItem('bench')"
+            >
+              🪑 Bench
+            </button>
+            <button
+              class="build-option-btn"
+              data-build-type="shrine"
+              onclick="selectBuildItem('shrine')"
+            >
+              ⛩️ Shrine
+            </button>
           </div>
 
           <p id="builder-menu-message">Choose a builder action.</p>
@@ -158,6 +212,22 @@
         <button id="upgrade-house-btn">Upgrade House</button>
 
         <p id="house-message"></p>
+      </div>
+    </div>
+    <div class="modal hidden" id="farm-modal">
+      <div class="modal-content">
+        <button class="close-button" id="close-farm-modal">X</button>
+
+        <h2>Farm</h2>
+
+        <p>Level: <strong id="farm-level"></strong></p>
+        <p>Crop Slots: <strong id="farm-slots"></strong></p>
+
+        <div id="farm-crop-slots"></div>
+
+        <button id="collect-crops-btn">Collect Crops</button>
+
+        <p id="farm-message"></p>
       </div>
     </div>
     <script src="js/state.js"></script>

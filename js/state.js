@@ -6,6 +6,7 @@ const DEFAULT_STATE = {
   townName: "Language Town",
 
   player: {
+    name: "Player",
     level: 1,
     xp: 0,
     xpToNextLevel: 100,
@@ -16,6 +17,11 @@ const DEFAULT_STATE = {
     knowledge: 0,
     wood: 0,
     culture: 0,
+    rice: 0,
+    wheat: 0,
+    soybean: 0,
+    greenOnion: 0,
+    tea: 0,
   },
 
   progress: {
@@ -165,7 +171,44 @@ const DEFAULT_STATE = {
     },
   },
 };
+function renderPlayerName() {
+  const state = getState();
 
+  const playerNameDisplay = document.getElementById("player-name-display");
+  const playerNameInput = document.getElementById("player-name-input");
+
+  if (playerNameDisplay) {
+    playerNameDisplay.textContent = state.player.name || "Player";
+  }
+
+  if (playerNameInput) {
+    playerNameInput.value = state.player.name || "Player";
+  }
+}
+
+function openPlayerNameModal() {
+  renderPlayerName();
+  document.getElementById("player-name-modal").classList.remove("hidden");
+}
+
+function closePlayerNameModal() {
+  document.getElementById("player-name-modal").classList.add("hidden");
+}
+
+function savePlayerName() {
+  const state = getState();
+  const input = document.getElementById("player-name-input");
+  const newName = input.value.trim();
+
+  if (!newName) return;
+
+  state.player.name = newName;
+
+  saveState(state);
+  renderPlayerName();
+
+  document.getElementById("player-name-modal").classList.add("hidden");
+}
 // Load saved state or create new state
 function loadState() {
   const savedState = localStorage.getItem("languageVillageState");
@@ -196,7 +239,9 @@ function loadState() {
         nextCitizenRequirement: 25,
       };
     }
-
+    if (!state.player.name) {
+      state.player.name = "Player";
+    }
     if (!state.village.buildings) {
       state.village.buildings = DEFAULT_STATE.village.buildings;
     }
@@ -251,12 +296,6 @@ function addXP(amount) {
 
   state.player.xp += amount;
 
-  while (state.player.xp >= state.player.xpToNextLevel) {
-    state.player.xp -= state.player.xpToNextLevel;
-    state.player.level += 1;
-    state.player.xpToNextLevel += 50;
-  }
-
   updateState(state);
 }
 
@@ -286,6 +325,7 @@ function spendResource(resourceName, amount) {
 
 // Render state to page
 function renderState() {
+  renderPlayerName();
   const state = getState();
 
   const levelElement = document.getElementById("player-level");
@@ -296,6 +336,11 @@ function renderState() {
   const knowledgeElement = document.getElementById("knowledge");
   const woodElement = document.getElementById("wood");
   const cultureElement = document.getElementById("culture");
+  const riceElement = document.getElementById("rice");
+  const wheatElement = document.getElementById("wheat");
+  const soybeanElement = document.getElementById("soybean");
+  const greenOnionElement = document.getElementById("greenOnion");
+  const teaElement = document.getElementById("tea");
 
   const wordsLearnedElement = document.getElementById("words-learned");
   const studiedTodayElement = document.getElementById("studied-today");
@@ -307,11 +352,14 @@ function renderState() {
   }
 
   if (xpCountElement) {
-    xpCountElement.textContent = state.player.xp;
+    const nextLevelRequirement = getNextLevelXPRequirement(state);
+
+    xpCountElement.textContent = `${state.player.xp} / ${nextLevelRequirement} XP`;
   }
 
   if (xpFillElement) {
-    const xpPercent = (state.player.xp / state.player.xpToNextLevel) * 100;
+    const nextLevelRequirement = getNextLevelXPRequirement(state);
+    const xpPercent = (state.player.xp / nextLevelRequirement) * 100;
     xpFillElement.style.width = `${xpPercent}%`;
   }
 
@@ -330,6 +378,12 @@ function renderState() {
   if (cultureElement) {
     cultureElement.textContent = state.resources.culture;
   }
+  if (riceElement) riceElement.textContent = state.resources.rice || 0;
+  if (wheatElement) wheatElement.textContent = state.resources.wheat || 0;
+  if (soybeanElement) soybeanElement.textContent = state.resources.soybean || 0;
+  if (greenOnionElement)
+    greenOnionElement.textContent = state.resources.greenOnion || 0;
+  if (teaElement) teaElement.textContent = state.resources.tea || 0;
 
   if (wordsLearnedElement) {
     const learnedCount = state.vocab.filter(
@@ -351,7 +405,33 @@ function renderState() {
     streakElement.textContent = state.progress.streak;
   }
 }
+function getNextLevelXPRequirement(state) {
+  const levelRequirements = {
+    2: 150,
+    3: 300,
+    4: 500,
+    5: 750,
+    6: 1000,
+    7: 1500,
+    8: 2000,
+    9: 2500,
+    10: 3000,
+    11: 4000,
+    12: 5000,
+    13: 6500,
+    14: 8000,
+    15: 10000,
+    16: 13000,
+    17: 16000,
+    18: 20000,
+    19: 25000,
+    20: 35000,
+  };
 
+  return (
+    levelRequirements[state.player.level + 1] || state.player.xpToNextLevel
+  );
+}
 // Reset game — useful during testing
 function resetGame() {
   localStorage.removeItem("languageVillageState");
@@ -359,4 +439,24 @@ function resetGame() {
 }
 
 // Run when page loads
-document.addEventListener("DOMContentLoaded", renderState);
+document.addEventListener("DOMContentLoaded", () => {
+  renderState();
+
+  const editPlayerNameBtn = document.getElementById("edit-player-name-btn");
+  const closePlayerNameModalBtn = document.getElementById(
+    "close-player-name-modal",
+  );
+  const savePlayerNameBtn = document.getElementById("save-player-name-btn");
+
+  if (editPlayerNameBtn) {
+    editPlayerNameBtn.addEventListener("click", openPlayerNameModal);
+  }
+
+  if (closePlayerNameModalBtn) {
+    closePlayerNameModalBtn.addEventListener("click", closePlayerNameModal);
+  }
+
+  if (savePlayerNameBtn) {
+    savePlayerNameBtn.addEventListener("click", savePlayerName);
+  }
+});

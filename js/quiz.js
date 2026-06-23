@@ -215,12 +215,6 @@ function goToNextQuestion() {
 }
 function addQuizXP(state, amount) {
   state.player.xp += amount;
-
-  while (state.player.xp >= state.player.xpToNextLevel) {
-    state.player.xp -= state.player.xpToNextLevel;
-    state.player.level += 1;
-    state.player.xpToNextLevel += 50;
-  }
 }
 function finishQuiz() {
   const state = getState();

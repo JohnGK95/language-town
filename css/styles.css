@@ -626,3 +626,57 @@ td[contenteditable="true"]:focus {
   color: #9d0208;
   font-weight: bold;
 }
+.xp-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.xp-row .xp-bar {
+  flex: 1;
+}
+
+.level-arrow-btn {
+  width: 36px;
+  height: 36px;
+
+  border-radius: 50%;
+  border: none;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #6b8f4e;
+  cursor: pointer;
+
+  font-size: 16px;
+  padding: 0;
+}
+
+.level-arrow-btn:hover {
+  transform: translateY(-2px);
+}
+.player-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.locked-build-option {
+  opacity: 0.45;
+  filter: grayscale(1);
+}
+.farm-slot-row {
+  margin-bottom: 12px;
+}
+
+.farm-slot-row label {
+  display: grid;
+  gap: 6px;
+}
+
+.farm-slot-row select {
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+}
