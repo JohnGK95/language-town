@@ -77,7 +77,7 @@ function startStudySession() {
   const selectedPack = document.getElementById("study-pack").value;
   const selectedGroup = document.getElementById("study-group").value;
   const selectedTag = document.getElementById("study-tag").value;
-
+  const selectedMastery = document.getElementById("study-mastery-filter").value;
   const studyCount = Number(document.getElementById("study-count").value);
   const message = document.getElementById("study-settings-message");
 
@@ -102,7 +102,29 @@ function startStudySession() {
   if (selectedTag !== "all") {
     words = words.filter((word) => word.tag === selectedTag);
   }
+  if (selectedMastery !== "all") {
+    words = words.filter((word) => {
+      const correct = word.quizCorrectCount || 0;
 
+      if (selectedMastery === "new") {
+        return correct === 0;
+      }
+
+      if (selectedMastery === "familiar") {
+        return correct >= 1 && correct < 3;
+      }
+
+      if (selectedMastery === "learned") {
+        return correct >= 3 && correct < 5;
+      }
+
+      if (selectedMastery === "mastered") {
+        return correct >= 5;
+      }
+
+      return true;
+    });
+  }
   if (words.length === 0) {
     message.textContent = "No words found for those filters.";
     return;
