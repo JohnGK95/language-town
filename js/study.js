@@ -2,25 +2,60 @@ let currentWordIndex = 0;
 let previousWordIndex = null;
 let currentStudyWords = [];
 
-function populateStudyGroupDropdown() {
+function populateStudyFilters() {
   const state = getState();
-  const groupSelect = document.getElementById("study-group");
 
-  if (!groupSelect) return;
+  fillDropdown(
+    "study-language",
+    state.vocab.map((word) => word.language),
+  );
 
-  const groups = [
-    ...new Set(
-      state.vocab
-        .map((word) => word.group)
-        .filter((group) => group && group.trim() !== ""),
-    ),
+  fillDropdown(
+    "study-level",
+    state.vocab.map((word) => word.level),
+  );
+
+  fillDropdown(
+    "study-pack",
+    state.vocab.map((word) => word.pack),
+  );
+
+  fillDropdown(
+    "study-group",
+    state.vocab.map((word) => word.group),
+  );
+
+  fillDropdown(
+    "study-tag",
+    state.vocab.map((word) => word.tag),
+  );
+}
+
+function fillDropdown(id, values) {
+  const dropdown = document.getElementById(id);
+
+  if (!dropdown) return;
+
+  const existingDefault = dropdown.querySelector("option");
+  dropdown.innerHTML = "";
+
+  if (existingDefault) {
+    dropdown.appendChild(existingDefault);
+  }
+
+  const uniqueValues = [
+    ...new Set(values.filter((value) => value && value.trim() !== "")),
   ];
 
-  groups.forEach((group) => {
+  uniqueValues.sort();
+
+  uniqueValues.forEach((value) => {
     const option = document.createElement("option");
-    option.value = group;
-    option.textContent = group;
-    groupSelect.appendChild(option);
+
+    option.value = value;
+    option.textContent = value;
+
+    dropdown.appendChild(option);
   });
 }
 
@@ -36,12 +71,29 @@ function getMasteryLabel(word) {
 
 function startStudySession() {
   const state = getState();
+
+  const selectedLanguage = document.getElementById("study-language").value;
+  const selectedLevel = document.getElementById("study-level").value;
+  const selectedPack = document.getElementById("study-pack").value;
   const selectedGroup = document.getElementById("study-group").value;
   const selectedTag = document.getElementById("study-tag").value;
+
   const studyCount = Number(document.getElementById("study-count").value);
   const message = document.getElementById("study-settings-message");
 
   let words = state.vocab;
+
+  if (selectedLanguage !== "all") {
+    words = words.filter((word) => word.language === selectedLanguage);
+  }
+
+  if (selectedLevel !== "all") {
+    words = words.filter((word) => word.level === selectedLevel);
+  }
+
+  if (selectedPack !== "all") {
+    words = words.filter((word) => word.pack === selectedPack);
+  }
 
   if (selectedGroup !== "all") {
     words = words.filter((word) => word.group === selectedGroup);
@@ -63,9 +115,11 @@ function startStudySession() {
   previousWordIndex = null;
   loadStudyWord();
 }
+
 function shuffleArray(array) {
   return [...array].sort(() => Math.random() - 0.5);
 }
+
 function getRandomWordIndex(vocabLength) {
   if (vocabLength === 1) return 0;
 
@@ -157,7 +211,9 @@ function completeReview(difficulty) {
 
   const savedWord = state.vocab.find((word) => {
     return (
-      word.word === currentWord.word && word.meaning === currentWord.meaning
+      word.word === currentWord.word &&
+      word.meaning === currentWord.meaning &&
+      word.language === currentWord.language
     );
   });
 
@@ -166,10 +222,6 @@ function completeReview(difficulty) {
   savedWord.timesStudied += 1;
   state.progress.studiedToday += 1;
   state.progress.reviewsCompleted += 1;
-
-  if (difficulty === "forgot") {
-    // No rewards for forgotten words
-  }
 
   if (difficulty === "hard") {
     state.resources.knowledge += 2;
@@ -246,32 +298,7 @@ function calculateStudyPopulationCap(state) {
 
   return basePopulationCap + housePopulationCap;
 }
-function populateStudyTagDropdown() {
-  const state = getState();
-  const group = document.getElementById("study-group").value;
-  const tagSelect = document.getElementById("study-tag");
 
-  tagSelect.innerHTML = `<option value="all">All Tags</option>`;
-
-  let words = state.vocab;
-
-  if (group !== "all") {
-    words = words.filter((word) => word.group === group);
-  }
-
-  const tags = [
-    ...new Set(
-      words.map((word) => word.tag).filter((tag) => tag && tag.trim() !== ""),
-    ),
-  ];
-
-  tags.forEach((tag) => {
-    const option = document.createElement("option");
-    option.value = tag;
-    option.textContent = tag;
-    tagSelect.appendChild(option);
-  });
-}
 function getStudyNextCitizenRequirement(currentPopulation) {
   if (currentPopulation === 0) return 25;
   if (currentPopulation === 1) return 50;
@@ -279,7 +306,7 @@ function getStudyNextCitizenRequirement(currentPopulation) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  populateStudyGroupDropdown();
+  populateStudyFilters();
 
   const startStudyBtn = document.getElementById("start-study-btn");
 
@@ -288,11 +315,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   loadStudyWord();
-  document
-    .getElementById("study-group")
-    .addEventListener("change", populateStudyTagDropdown);
 
-  populateStudyTagDropdown();
   document
     .getElementById("show-answer-btn")
     .addEventListener("click", showAnswer);

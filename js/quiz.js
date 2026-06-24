@@ -5,23 +5,60 @@ let totalCoinsEarned = 0;
 let totalKnowledgeEarned = 0;
 let quizDirection = "meaning-to-word";
 
-function populateGroupDropdown() {
+function populateQuizFilters() {
   const state = getState();
-  const groupSelect = document.getElementById("quiz-group");
 
-  const groups = [
-    ...new Set(
-      state.vocab
-        .map((word) => word.group)
-        .filter((group) => group && group.trim() !== ""),
-    ),
+  fillQuizDropdown(
+    "quiz-language",
+    state.vocab.map((word) => word.language),
+  );
+
+  fillQuizDropdown(
+    "quiz-level",
+    state.vocab.map((word) => word.level),
+  );
+
+  fillQuizDropdown(
+    "quiz-pack",
+    state.vocab.map((word) => word.pack),
+  );
+
+  fillQuizDropdown(
+    "quiz-group",
+    state.vocab.map((word) => word.group),
+  );
+
+  fillQuizDropdown(
+    "quiz-tag",
+    state.vocab.map((word) => word.tag),
+  );
+}
+
+function fillQuizDropdown(id, values) {
+  const dropdown = document.getElementById(id);
+
+  if (!dropdown) return;
+
+  const defaultOption = dropdown.querySelector("option");
+  dropdown.innerHTML = "";
+
+  if (defaultOption) {
+    dropdown.appendChild(defaultOption);
+  }
+
+  const uniqueValues = [
+    ...new Set(values.filter((value) => value && value.trim() !== "")),
   ];
 
-  groups.forEach((group) => {
+  uniqueValues.sort();
+
+  uniqueValues.forEach((value) => {
     const option = document.createElement("option");
-    option.value = group;
-    option.textContent = group;
-    groupSelect.appendChild(option);
+
+    option.value = value;
+    option.textContent = value;
+
+    dropdown.appendChild(option);
   });
 }
 
@@ -29,33 +66,58 @@ function shuffleArray(array) {
   return [...array].sort(() => Math.random() - 0.5);
 }
 
-function startQuiz() {
+function getFilteredQuizWords() {
   const state = getState();
 
-  const questionCount = Number(document.getElementById("question-count").value);
-
+  const selectedLanguage = document.getElementById("quiz-language").value;
+  const selectedLevel = document.getElementById("quiz-level").value;
+  const selectedPack = document.getElementById("quiz-pack").value;
   const selectedGroup = document.getElementById("quiz-group").value;
   const selectedTag = document.getElementById("quiz-tag").value;
 
-  quizDirection = document.getElementById("quiz-direction").value;
-
   let availableWords = state.vocab;
 
-  // Filter by group first
+  if (selectedLanguage !== "all") {
+    availableWords = availableWords.filter(
+      (word) => word.language === selectedLanguage,
+    );
+  }
+
+  if (selectedLevel !== "all") {
+    availableWords = availableWords.filter(
+      (word) => word.level === selectedLevel,
+    );
+  }
+
+  if (selectedPack !== "all") {
+    availableWords = availableWords.filter(
+      (word) => word.pack === selectedPack,
+    );
+  }
+
   if (selectedGroup !== "all") {
     availableWords = availableWords.filter(
       (word) => word.group === selectedGroup,
     );
   }
 
-  // Then filter by tag
   if (selectedTag !== "all") {
     availableWords = availableWords.filter((word) => word.tag === selectedTag);
   }
 
+  return availableWords;
+}
+
+function startQuiz() {
+  const questionCount = Number(document.getElementById("question-count").value);
+
+  quizDirection = document.getElementById("quiz-direction").value;
+
+  const availableWords = getFilteredQuizWords();
+
   if (availableWords.length < 4) {
     document.getElementById("quiz-setup-message").textContent =
-      "You need at least 4 words in this group to make a multiple-choice quiz.";
+      "You need at least 4 words matching these filters to make a multiple-choice quiz.";
     return;
   }
 
@@ -75,13 +137,20 @@ function startQuiz() {
   document.getElementById("total-question-number").textContent =
     quizWords.length;
 
+  document.getElementById("quiz-setup-message").textContent = "";
+
   showQuestion();
 }
+
 function showAnswerDetails(word) {
   const state = getState();
 
   const savedWord = state.vocab.find((entry) => {
-    return entry.word === word.word && entry.meaning === word.meaning;
+    return (
+      entry.word === word.word &&
+      entry.meaning === word.meaning &&
+      entry.language === word.language
+    );
   });
 
   document.getElementById("detail-word").textContent = word.word;
@@ -99,6 +168,7 @@ function showAnswerDetails(word) {
 
   document.getElementById("answer-details").classList.remove("hidden");
 }
+
 function showQuestion() {
   const currentWord = quizWords[currentQuestionIndex];
 
@@ -113,8 +183,15 @@ function showQuestion() {
   answerOptions.innerHTML = "";
   document.getElementById("answer-details").classList.add("hidden");
   document.getElementById("next-question-btn").classList.add("hidden");
+
   const distractors = shuffleArray(
-    quizWords.filter((word) => word.word !== currentWord.word),
+    quizWords.filter((word) => {
+      return !(
+        word.word === currentWord.word &&
+        word.meaning === currentWord.meaning &&
+        word.language === currentWord.language
+      );
+    }),
   ).slice(0, 3);
 
   const options = shuffleArray([currentWord, ...distractors]);
@@ -145,12 +222,15 @@ function showQuestion() {
     });
   }
 }
+
 function updateWordMastery(correctWord, isCorrect) {
   const state = getState();
 
   const word = state.vocab.find((entry) => {
     return (
-      entry.word === correctWord.word && entry.meaning === correctWord.meaning
+      entry.word === correctWord.word &&
+      entry.meaning === correctWord.meaning &&
+      entry.language === correctWord.language
     );
   });
 
@@ -172,6 +252,7 @@ function updateWordMastery(correctWord, isCorrect) {
 
   saveState(state);
 }
+
 function checkAnswer(selectedOption, correctWord, selectedButton) {
   const answerButtons = document.querySelectorAll("#answer-options button");
 
@@ -181,8 +262,13 @@ function checkAnswer(selectedOption, correctWord, selectedButton) {
     button.disabled = true;
   });
 
-  const isCorrect = selectedOption.word === correctWord.word;
+  const isCorrect =
+    selectedOption.word === correctWord.word &&
+    selectedOption.meaning === correctWord.meaning &&
+    selectedOption.language === correctWord.language;
+
   updateWordMastery(correctWord, isCorrect);
+
   if (isCorrect) {
     selectedButton.classList.add("correct-answer");
     correctAnswers += 1;
@@ -211,6 +297,7 @@ function checkAnswer(selectedOption, correctWord, selectedButton) {
 
   document.getElementById("next-question-btn").classList.remove("hidden");
 }
+
 function goToNextQuestion() {
   currentQuestionIndex += 1;
 
@@ -220,35 +307,11 @@ function goToNextQuestion() {
     showQuestion();
   }
 }
-function populateQuizTagDropdown() {
-  const state = getState();
-  const group = document.getElementById("quiz-group").value;
-  const tagSelect = document.getElementById("quiz-tag");
 
-  tagSelect.innerHTML = `<option value="all">All Tags</option>`;
-
-  let words = state.vocab;
-
-  if (group !== "all") {
-    words = words.filter((word) => word.group === group);
-  }
-
-  const tags = [
-    ...new Set(
-      words.map((word) => word.tag).filter((tag) => tag && tag.trim() !== ""),
-    ),
-  ];
-
-  tags.forEach((tag) => {
-    const option = document.createElement("option");
-    option.value = tag;
-    option.textContent = tag;
-    tagSelect.appendChild(option);
-  });
-}
 function addQuizXP(state, amount) {
   state.player.xp += amount;
 }
+
 function finishQuiz() {
   const state = getState();
 
@@ -262,9 +325,11 @@ function finishQuiz() {
 
   state.resources.coins += totalCoinsEarned;
   state.resources.knowledge += totalKnowledgeEarned;
+
   const xpEarned = correctAnswers * 3;
 
   addQuizXP(state, xpEarned);
+
   if (!state.quizStats) {
     state.quizStats = {
       quizzesTaken: 0,
@@ -294,6 +359,7 @@ function finishQuiz() {
   document.getElementById("knowledge-earned").textContent =
     totalKnowledgeEarned;
 }
+
 function getMasteryLabel(word) {
   const correct = word.quizCorrectCount || 0;
 
@@ -303,18 +369,15 @@ function getMasteryLabel(word) {
 
   return "New ⭐";
 }
+
 function restartQuiz() {
   document.getElementById("quiz-results").classList.add("hidden");
   document.getElementById("quiz-setup").classList.remove("hidden");
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  populateGroupDropdown();
-  document
-    .getElementById("quiz-group")
-    .addEventListener("change", populateQuizTagDropdown);
+  populateQuizFilters();
 
-  populateQuizTagDropdown();
   document
     .getElementById("start-quiz-btn")
     .addEventListener("click", startQuiz);

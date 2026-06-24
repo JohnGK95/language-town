@@ -29,50 +29,75 @@
         <h2>Add New Word</h2>
 
         <form id="vocab-form" class="vocab-form">
+          <input id="language" placeholder="Language, e.g. Taiwan Mandarin" />
           <input id="word" placeholder="Word" required />
           <input id="pronunciation" placeholder="Pronunciation" />
+          <input id="tone-practice" placeholder="Tone Practice, e.g. ka fei" />
+          <input id="tone-distractor-1" placeholder="Tone Distractor 1" />
+          <input id="tone-distractor-2" placeholder="Tone Distractor 2" />
+          <input id="tone-distractor-3" placeholder="Tone Distractor 3" />
+
           <input id="meaning" placeholder="Meaning" required />
+
           <input id="example" placeholder="Example sentence" />
           <input
             id="example-pronunciation"
             placeholder="Sentence pronunciation"
           />
           <input id="example-meaning" placeholder="Sentence meaning" />
+
+          <input id="level" placeholder="Level, e.g. Novice 1" />
           <input id="group" placeholder="Group, e.g. Food" />
-          <input id="tag" placeholder="Tag, e.g. B1, TOCFL, Travel" />
+          <input id="tag" placeholder="Tag, e.g. pronouns, travel" />
+          <input id="pack" placeholder="Pack, e.g. core content" />
+
           <textarea id="notes" placeholder="Notes"></textarea>
 
           <button type="submit">Add Word</button>
         </form>
       </section>
+
       <section class="card">
         <h2>Import Vocabulary CSV</h2>
 
         <p>
-          Upload a CSV file with these headers: word, pronunciation, meaning,
-          example sentence, pronunciation sentence, sentence meaning, group,
-          tag, notes
+          Upload a CSV file with these headers: language, word, pronunciation,
+          tone practice, tone distractor 1, tone distractor 2, tone distractor
+          3, meaning, example sentence, sentence pronunciation, sentence
+          meaning, level, group, tag, pack, notes
         </p>
 
         <input type="file" id="csv-file-input" accept=".csv" />
 
         <p id="import-message"></p>
       </section>
+
       <section class="card hidden" id="edit-vocab-section">
         <h2>Edit Word</h2>
 
         <form id="edit-vocab-form" class="vocab-form">
+          <input id="edit-language" placeholder="Language" />
           <input id="edit-word" placeholder="Word" required />
           <input id="edit-pronunciation" placeholder="Pronunciation" />
+          <input id="edit-tone-practice" placeholder="Tone Practice" />
+          <input id="edit-tone-distractor-1" placeholder="Tone Distractor 1" />
+          <input id="edit-tone-distractor-2" placeholder="Tone Distractor 2" />
+          <input id="edit-tone-distractor-3" placeholder="Tone Distractor 3" />
+
           <input id="edit-meaning" placeholder="Meaning" required />
+
           <input id="edit-example" placeholder="Example sentence" />
           <input
             id="edit-example-pronunciation"
             placeholder="Sentence pronunciation"
           />
           <input id="edit-example-meaning" placeholder="Sentence meaning" />
+
+          <input id="edit-level" placeholder="Level" />
           <input id="edit-group" placeholder="Group" />
           <input id="edit-tag" placeholder="Tag" />
+          <input id="edit-pack" placeholder="Pack" />
+
           <textarea id="edit-notes" placeholder="Notes"></textarea>
 
           <div class="button-row">
@@ -81,6 +106,7 @@
           </div>
         </form>
       </section>
+
       <section class="card">
         <h2>Your Words</h2>
 
@@ -88,12 +114,16 @@
           <table>
             <thead>
               <tr>
+                <th>Language</th>
                 <th>Word</th>
                 <th>Pronunciation</th>
+                <th>Tone Practice</th>
                 <th>Meaning</th>
+                <th>Level</th>
                 <th>Group</th>
                 <th>Tag</th>
-                <th>Delete</th>
+                <th>Pack</th>
+                <th>Actions</th>
               </tr>
             </thead>
 

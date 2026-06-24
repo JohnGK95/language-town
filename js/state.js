@@ -41,6 +41,10 @@ const DEFAULT_STATE = {
       building: "Town Hall",
       relationshipLevel: 1,
       relationshipPoints: 0,
+      relationshipXP: 0,
+      lastInteractionDate: null,
+      dailyTaskCompleted: false,
+      streak: 0,
       unlocked: true,
       dialogue:
         "Welcome, founder. A town grows when its people and language grow together.",
@@ -53,6 +57,10 @@ const DEFAULT_STATE = {
       building: "Library",
       relationshipLevel: 1,
       relationshipPoints: 0,
+      relationshipXP: 0,
+      lastInteractionDate: null,
+      dailyTaskCompleted: false,
+      streak: 0,
       unlocked: true,
       dialogue: "Every word you learn becomes part of our shared archive.",
       focus: "Vocabulary and study tools",
@@ -64,6 +72,10 @@ const DEFAULT_STATE = {
       building: "School",
       relationshipLevel: 1,
       relationshipPoints: 0,
+      relationshipXP: 0,
+      lastInteractionDate: null,
+      dailyTaskCompleted: false,
+      streak: 0,
       unlocked: true,
       dialogue:
         "Practice turns knowledge into skill. Let us keep improving together.",
@@ -76,6 +88,10 @@ const DEFAULT_STATE = {
       building: "Market",
       relationshipLevel: 1,
       relationshipPoints: 0,
+      relationshipXP: 0,
+      lastInteractionDate: null,
+      dailyTaskCompleted: false,
+      streak: 0,
       unlocked: true,
       dialogue: "Bring me coins, and I will help your town prosper.",
       focus: "Shopping, trade, and economy",
@@ -87,6 +103,10 @@ const DEFAULT_STATE = {
       building: "Lumber Mill",
       relationshipLevel: 1,
       relationshipPoints: 0,
+      relationshipXP: 0,
+      lastInteractionDate: null,
+      dailyTaskCompleted: false,
+      streak: 0,
       unlocked: true,
       dialogue:
         "Strong buildings need strong timber. Keep learning, and we will keep building.",
@@ -99,6 +119,10 @@ const DEFAULT_STATE = {
       building: "Build Mode",
       relationshipLevel: 1,
       relationshipPoints: 0,
+      relationshipXP: 0,
+      lastInteractionDate: null,
+      dailyTaskCompleted: false,
+      streak: 0,
       unlocked: false,
       unlockLevel: 2,
       dialogue: "People need homes before they can settle down.",
@@ -111,6 +135,10 @@ const DEFAULT_STATE = {
       building: "Farm",
       relationshipLevel: 1,
       relationshipPoints: 0,
+      relationshipXP: 0,
+      lastInteractionDate: null,
+      dailyTaskCompleted: false,
+      streak: 0,
       unlocked: false,
       unlockLevel: 3,
       dialogue: "The land teaches us patience, and every crop has a story.",
@@ -223,7 +251,23 @@ function loadState() {
     if (!state.villagers || state.villagers.length === 0) {
       state.villagers = DEFAULT_STATE.villagers;
     }
+    state.villagers.forEach((villager) => {
+      if (villager.relationshipXP === undefined) {
+        villager.relationshipXP = villager.relationshipPoints || 0;
+      }
 
+      if (villager.lastInteractionDate === undefined) {
+        villager.lastInteractionDate = null;
+      }
+
+      if (villager.dailyTaskCompleted === undefined) {
+        villager.dailyTaskCompleted = false;
+      }
+
+      if (villager.streak === undefined) {
+        villager.streak = 0;
+      }
+    });
     if (!state.village) {
       state.village = DEFAULT_STATE.village;
     }
@@ -265,6 +309,22 @@ function loadState() {
       if (!savedBuilding.y) savedBuilding.y = defaultBuilding.y;
       if (!savedBuilding.width) savedBuilding.width = defaultBuilding.width;
       if (!savedBuilding.height) savedBuilding.height = defaultBuilding.height;
+    });
+    if (!Array.isArray(state.vocab)) {
+      state.vocab = [];
+    }
+    state.vocab.forEach((word) => {
+      if (word.language === undefined) word.language = "";
+      if (word.tonePractice === undefined) word.tonePractice = "";
+      if (word.toneDistractor1 === undefined) word.toneDistractor1 = "";
+      if (word.toneDistractor2 === undefined) word.toneDistractor2 = "";
+      if (word.toneDistractor3 === undefined) word.toneDistractor3 = "";
+
+      if (word.level === undefined) word.level = "";
+      if (word.pack === undefined) word.pack = "";
+
+      if (word.quizCorrectCount === undefined) word.quizCorrectCount = 0;
+      if (word.quizWrongCount === undefined) word.quizWrongCount = 0;
     });
     saveState(state);
     return state;

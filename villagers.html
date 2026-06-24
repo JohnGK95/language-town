@@ -32,7 +32,23 @@
         <div id="villager-list" class="villager-list"></div>
       </section>
     </main>
+    <div class="modal hidden" id="villager-talk-modal">
+      <div class="modal-content">
+        <button class="close-button" id="close-villager-talk-modal">X</button>
 
+        <h2 id="talk-villager-name"></h2>
+        <p id="talk-villager-dialogue"></p>
+
+        <hr />
+
+        <h3>Daily Task</h3>
+        <p id="daily-task-text">Complete today's short learning task.</p>
+
+        <button id="complete-daily-task-btn">Complete Daily Task</button>
+
+        <p id="daily-task-message"></p>
+      </div>
+    </div>
     <script src="js/state.js"></script>
     <script src="js/villagers.js"></script>
   </body>

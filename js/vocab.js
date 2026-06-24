@@ -12,11 +12,15 @@ function renderVocabTable() {
     const row = document.createElement("tr");
 
     row.innerHTML = `
-      <td>${entry.word}</td>
-      <td>${entry.pronunciation}</td>
-      <td>${entry.meaning}</td>
-      <td>${entry.group}</td>
-      <td>${entry.tag}</td>
+      <td>${entry.language || ""}</td>
+      <td>${entry.word || ""}</td>
+      <td>${entry.pronunciation || ""}</td>
+      <td>${entry.tonePractice || ""}</td>
+      <td>${entry.meaning || ""}</td>
+      <td>${entry.level || ""}</td>
+      <td>${entry.group || ""}</td>
+      <td>${entry.tag || ""}</td>
+      <td>${entry.pack || ""}</td>
       <td>
         <button onclick="openEditForm(${index})">Edit</button>
         <button onclick="deleteVocabWord(${index})">Delete</button>
@@ -33,17 +37,33 @@ function openEditForm(index) {
 
   editingIndex = index;
 
+  document.getElementById("edit-language").value = entry.language || "";
   document.getElementById("edit-word").value = entry.word || "";
   document.getElementById("edit-pronunciation").value =
     entry.pronunciation || "";
+
+  document.getElementById("edit-tone-practice").value =
+    entry.tonePractice || "";
+  document.getElementById("edit-tone-distractor-1").value =
+    entry.toneDistractor1 || "";
+  document.getElementById("edit-tone-distractor-2").value =
+    entry.toneDistractor2 || "";
+  document.getElementById("edit-tone-distractor-3").value =
+    entry.toneDistractor3 || "";
+
   document.getElementById("edit-meaning").value = entry.meaning || "";
+
   document.getElementById("edit-example").value = entry.example || "";
   document.getElementById("edit-example-pronunciation").value =
     entry.examplePronunciation || "";
   document.getElementById("edit-example-meaning").value =
     entry.exampleMeaning || "";
+
+  document.getElementById("edit-level").value = entry.level || "";
   document.getElementById("edit-group").value = entry.group || "";
   document.getElementById("edit-tag").value = entry.tag || "";
+  document.getElementById("edit-pack").value = entry.pack || "";
+
   document.getElementById("edit-notes").value = entry.notes || "";
 
   document.getElementById("edit-vocab-section").classList.remove("hidden");
@@ -58,9 +78,25 @@ function saveEditedWord(event) {
 
   state.vocab[editingIndex] = {
     ...state.vocab[editingIndex],
+
+    language: document.getElementById("edit-language").value.trim(),
+
     word: document.getElementById("edit-word").value.trim(),
     pronunciation: document.getElementById("edit-pronunciation").value.trim(),
+
+    tonePractice: document.getElementById("edit-tone-practice").value.trim(),
+    toneDistractor1: document
+      .getElementById("edit-tone-distractor-1")
+      .value.trim(),
+    toneDistractor2: document
+      .getElementById("edit-tone-distractor-2")
+      .value.trim(),
+    toneDistractor3: document
+      .getElementById("edit-tone-distractor-3")
+      .value.trim(),
+
     meaning: document.getElementById("edit-meaning").value.trim(),
+
     example: document.getElementById("edit-example").value.trim(),
     examplePronunciation: document
       .getElementById("edit-example-pronunciation")
@@ -68,8 +104,12 @@ function saveEditedWord(event) {
     exampleMeaning: document
       .getElementById("edit-example-meaning")
       .value.trim(),
+
+    level: document.getElementById("edit-level").value.trim(),
     group: document.getElementById("edit-group").value.trim(),
     tag: document.getElementById("edit-tag").value.trim(),
+    pack: document.getElementById("edit-pack").value.trim(),
+
     notes: document.getElementById("edit-notes").value.trim(),
   };
 
@@ -96,19 +136,35 @@ function addVocabWord(event) {
   const state = getState();
 
   const newWord = {
+    language: document.getElementById("language").value.trim(),
+
     word: document.getElementById("word").value.trim(),
     pronunciation: document.getElementById("pronunciation").value.trim(),
+
+    tonePractice: document.getElementById("tone-practice").value.trim(),
+    toneDistractor1: document.getElementById("tone-distractor-1").value.trim(),
+    toneDistractor2: document.getElementById("tone-distractor-2").value.trim(),
+    toneDistractor3: document.getElementById("tone-distractor-3").value.trim(),
+
     meaning: document.getElementById("meaning").value.trim(),
+
     example: document.getElementById("example").value.trim(),
     examplePronunciation: document
       .getElementById("example-pronunciation")
       .value.trim(),
     exampleMeaning: document.getElementById("example-meaning").value.trim(),
+
+    level: document.getElementById("level").value.trim(),
     group: document.getElementById("group").value.trim(),
     tag: document.getElementById("tag").value.trim(),
+    pack: document.getElementById("pack").value.trim(),
+
     notes: document.getElementById("notes").value.trim(),
+
     timesStudied: 0,
     correctCount: 0,
+    quizCorrectCount: 0,
+    quizWrongCount: 0,
     createdAt: new Date().toISOString(),
   };
 
@@ -199,7 +255,9 @@ function importCSV(event) {
     const dataRows = rows.slice(1);
 
     const state = getState();
-    let importedCount = 0;
+
+    let addedCount = 0;
+    let updatedCount = 0;
 
     dataRows.forEach((row) => {
       const rowData = {};
@@ -210,31 +268,62 @@ function importCSV(event) {
 
       if (!rowData.word || !rowData.meaning) return;
 
-      state.vocab.push({
+      const importedWord = {
+        language: rowData.language || "",
+
         word: rowData.word || "",
         pronunciation: rowData.pronunciation || "",
+
+        tonePractice: rowData["tone practice"] || "",
+        toneDistractor1: rowData["tone distractor 1"] || "",
+        toneDistractor2: rowData["tone distractor 2"] || "",
+        toneDistractor3: rowData["tone distractor 3"] || "",
+
         meaning: rowData.meaning || "",
+
         example: rowData["example sentence"] || "",
         examplePronunciation:
-          rowData["pronunciation sentence"] ||
           rowData["sentence pronunciation"] ||
+          rowData["pronunciation sentence"] ||
           "",
+
         exampleMeaning: rowData["sentence meaning"] || "",
+
+        level: rowData.level || "",
         group: rowData.group || "",
         tag: rowData.tag || "",
+        pack: rowData.pack || "",
+
         notes: rowData.notes || "",
-        timesStudied: 0,
-        correctCount: 0,
-        createdAt: new Date().toISOString(),
+      };
+
+      const existingWord = state.vocab.find((savedWord) => {
+        return savedWord.word === importedWord.word;
       });
 
-      importedCount++;
+      if (existingWord) {
+        Object.assign(existingWord, importedWord);
+        updatedCount++;
+      } else {
+        state.vocab.push({
+          ...importedWord,
+
+          timesStudied: 0,
+          correctCount: 0,
+          quizCorrectCount: 0,
+          quizWrongCount: 0,
+
+          createdAt: new Date().toISOString(),
+        });
+
+        addedCount++;
+      }
     });
 
     saveState(state);
     renderVocabTable();
 
-    message.textContent = `Imported ${importedCount} new word(s). Existing words were kept.`;
+    message.textContent = `Import complete: ${addedCount} new word(s), ${updatedCount} updated word(s).`;
 
     event.target.value = "";
   };
