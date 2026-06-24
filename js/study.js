@@ -37,27 +37,35 @@ function getMasteryLabel(word) {
 function startStudySession() {
   const state = getState();
   const selectedGroup = document.getElementById("study-group").value;
+  const selectedTag = document.getElementById("study-tag").value;
+  const studyCount = Number(document.getElementById("study-count").value);
   const message = document.getElementById("study-settings-message");
 
-  if (selectedGroup === "all") {
-    currentStudyWords = state.vocab;
-  } else {
-    currentStudyWords = state.vocab.filter((word) => {
-      return word.group === selectedGroup;
-    });
+  let words = state.vocab;
+
+  if (selectedGroup !== "all") {
+    words = words.filter((word) => word.group === selectedGroup);
   }
 
-  if (currentStudyWords.length === 0) {
-    message.textContent = "No words found for this group.";
+  if (selectedTag !== "all") {
+    words = words.filter((word) => word.tag === selectedTag);
+  }
+
+  if (words.length === 0) {
+    message.textContent = "No words found for those filters.";
     return;
   }
 
-  message.textContent = `Studying ${currentStudyWords.length} word(s).`;
-  previousWordIndex = null;
+  currentStudyWords = shuffleArray(words).slice(0, studyCount);
 
+  message.textContent = `Studying ${currentStudyWords.length} word(s).`;
+
+  previousWordIndex = null;
   loadStudyWord();
 }
-
+function shuffleArray(array) {
+  return [...array].sort(() => Math.random() - 0.5);
+}
 function getRandomWordIndex(vocabLength) {
   if (vocabLength === 1) return 0;
 
@@ -238,7 +246,32 @@ function calculateStudyPopulationCap(state) {
 
   return basePopulationCap + housePopulationCap;
 }
+function populateStudyTagDropdown() {
+  const state = getState();
+  const group = document.getElementById("study-group").value;
+  const tagSelect = document.getElementById("study-tag");
 
+  tagSelect.innerHTML = `<option value="all">All Tags</option>`;
+
+  let words = state.vocab;
+
+  if (group !== "all") {
+    words = words.filter((word) => word.group === group);
+  }
+
+  const tags = [
+    ...new Set(
+      words.map((word) => word.tag).filter((tag) => tag && tag.trim() !== ""),
+    ),
+  ];
+
+  tags.forEach((tag) => {
+    const option = document.createElement("option");
+    option.value = tag;
+    option.textContent = tag;
+    tagSelect.appendChild(option);
+  });
+}
 function getStudyNextCitizenRequirement(currentPopulation) {
   if (currentPopulation === 0) return 25;
   if (currentPopulation === 1) return 50;
@@ -255,7 +288,11 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   loadStudyWord();
+  document
+    .getElementById("study-group")
+    .addEventListener("change", populateStudyTagDropdown);
 
+  populateStudyTagDropdown();
   document
     .getElementById("show-answer-btn")
     .addEventListener("click", showAnswer);

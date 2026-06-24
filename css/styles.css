@@ -680,3 +680,22 @@ td[contenteditable="true"]:focus {
   border-radius: 10px;
   border: 1px solid #ccc;
 }
+.level-arrow-btn.level-ready {
+  background: #f4c542;
+  box-shadow: 0 0 12px rgba(244, 197, 66, 0.9);
+  animation: levelReadyPulse 1.3s infinite;
+}
+
+@keyframes levelReadyPulse {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.12);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}

@@ -33,15 +33,24 @@ function startQuiz() {
   const state = getState();
 
   const questionCount = Number(document.getElementById("question-count").value);
+
   const selectedGroup = document.getElementById("quiz-group").value;
+  const selectedTag = document.getElementById("quiz-tag").value;
+
   quizDirection = document.getElementById("quiz-direction").value;
 
   let availableWords = state.vocab;
 
+  // Filter by group first
   if (selectedGroup !== "all") {
     availableWords = availableWords.filter(
       (word) => word.group === selectedGroup,
     );
+  }
+
+  // Then filter by tag
+  if (selectedTag !== "all") {
+    availableWords = availableWords.filter((word) => word.tag === selectedTag);
   }
 
   if (availableWords.length < 4) {
@@ -104,10 +113,8 @@ function showQuestion() {
   answerOptions.innerHTML = "";
   document.getElementById("answer-details").classList.add("hidden");
   document.getElementById("next-question-btn").classList.add("hidden");
-  const state = getState();
-
   const distractors = shuffleArray(
-    state.vocab.filter((word) => word.word !== currentWord.word),
+    quizWords.filter((word) => word.word !== currentWord.word),
   ).slice(0, 3);
 
   const options = shuffleArray([currentWord, ...distractors]);
@@ -213,6 +220,32 @@ function goToNextQuestion() {
     showQuestion();
   }
 }
+function populateQuizTagDropdown() {
+  const state = getState();
+  const group = document.getElementById("quiz-group").value;
+  const tagSelect = document.getElementById("quiz-tag");
+
+  tagSelect.innerHTML = `<option value="all">All Tags</option>`;
+
+  let words = state.vocab;
+
+  if (group !== "all") {
+    words = words.filter((word) => word.group === group);
+  }
+
+  const tags = [
+    ...new Set(
+      words.map((word) => word.tag).filter((tag) => tag && tag.trim() !== ""),
+    ),
+  ];
+
+  tags.forEach((tag) => {
+    const option = document.createElement("option");
+    option.value = tag;
+    option.textContent = tag;
+    tagSelect.appendChild(option);
+  });
+}
 function addQuizXP(state, amount) {
   state.player.xp += amount;
 }
@@ -277,7 +310,11 @@ function restartQuiz() {
 
 document.addEventListener("DOMContentLoaded", () => {
   populateGroupDropdown();
+  document
+    .getElementById("quiz-group")
+    .addEventListener("change", populateQuizTagDropdown);
 
+  populateQuizTagDropdown();
   document
     .getElementById("start-quiz-btn")
     .addEventListener("click", startQuiz);

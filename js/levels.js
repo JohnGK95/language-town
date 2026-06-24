@@ -337,6 +337,7 @@ function renderLevelModal() {
   } else {
     levelUpBtn.classList.add("hidden");
   }
+  updateLevelArrowState();
 }
 function canLevelUp() {
   const state = getState();
@@ -374,7 +375,19 @@ function openLevelModal() {
 function closeLevelModal() {
   document.getElementById("level-modal").classList.add("hidden");
 }
+function updateLevelArrowState() {
+  const levelArrowBtn = document.getElementById("open-level-modal-btn");
 
+  if (!levelArrowBtn) return;
+
+  if (canLevelUp()) {
+    levelArrowBtn.classList.add("level-ready");
+    levelArrowBtn.title = "Ready to level up!";
+  } else {
+    levelArrowBtn.classList.remove("level-ready");
+    levelArrowBtn.title = "View Level Requirements";
+  }
+}
 function levelUpPlayer() {
   const state = getState();
 
@@ -396,6 +409,7 @@ function levelUpPlayer() {
   saveState(state);
   renderState();
   renderLevelModal();
+  updateLevelArrowState();
 
   document.getElementById("level-modal-message").textContent =
     `You reached Level ${state.player.level}!`;
@@ -413,4 +427,8 @@ document.addEventListener("DOMContentLoaded", () => {
   document
     .getElementById("level-up-btn")
     .addEventListener("click", levelUpPlayer);
-});
+    
+    
+}
+),updateLevelArrowState();
+;
