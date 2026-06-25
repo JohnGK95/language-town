@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Tone Practice | Language Town</title>
+
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+
+  <body>
+    <header class="top-bar">
+      <div>
+        <h1>Tone Practice</h1>
+        <p>Practice recognizing Mandarin tones with Teacher Lian.</p>
+      </div>
+
+      <nav>
+        <a href="index.html">Home</a>
+        <a href="vocab.html">Vocabulary</a>
+        <a href="study.html">Study</a>
+        <a href="quiz.html">Quiz</a>
+        <a href="village.html">Village</a>
+        <a href="villagers.html">Villagers</a>
+      </nav>
+    </header>
+
+    <main class="page">
+      <section class="card" id="tone-setup">
+        <h2>Tone Practice Setup</h2>
+
+        <label>
+          Number of Questions
+          <input id="tone-question-count" type="number" min="1" value="10" />
+        </label>
+
+        <label>
+          Language
+          <select id="tone-language">
+            <option value="all">All Languages</option>
+          </select>
+        </label>
+
+        <label>
+          Level
+          <select id="tone-level">
+            <option value="all">All Levels</option>
+          </select>
+        </label>
+
+        <label>
+          Pack
+          <select id="tone-pack">
+            <option value="all">All Packs</option>
+          </select>
+        </label>
+
+        <label>
+          Group
+          <select id="tone-group">
+            <option value="all">All Groups</option>
+          </select>
+        </label>
+
+        <label>
+          Tag
+          <select id="tone-tag">
+            <option value="all">All Tags</option>
+          </select>
+        </label>
+
+        <label>
+          Mastery
+          <select id="tone-mastery-filter">
+            <option value="all">All Words</option>
+            <option value="new">New Tone Practice</option>
+            <option value="familiar">Familiar Tone Practice</option>
+            <option value="learned">Learned Tone Practice</option>
+            <option value="mastered">Mastered Tone Practice</option>
+          </select>
+        </label>
+
+        <button id="start-tone-btn">Start Tone Practice</button>
+
+        <p id="tone-setup-message"></p>
+      </section>
+
+      <section class="card hidden" id="tone-card">
+        <p>
+          Question <span id="current-tone-number">1</span> /
+          <span id="total-tone-number">10</span>
+        </p>
+
+        <h2 id="tone-word"></h2>
+        <p id="tone-practice-prompt"></p>
+
+        <div id="tone-options" class="answer-options"></div>
+
+        <p id="tone-feedback"></p>
+
+        <div id="tone-answer-details" class="answer-details hidden">
+          <h2 id="tone-detail-word"></h2>
+          <p id="tone-detail-pronunciation"></p>
+          <p id="tone-detail-meaning"></p>
+          <p id="tone-detail-progress"></p>
+
+          <button id="next-tone-btn" class="hidden">Next →</button>
+        </div>
+      </section>
+
+      <section class="card hidden" id="tone-results">
+        <h2>Tone Practice Complete!</h2>
+
+        <p>Score: <strong id="tone-score"></strong></p>
+        <p>Knowledge Earned: 📚 <strong id="tone-knowledge-earned"></strong></p>
+        <p>
+          Citizen Progress Earned: 👥 <strong id="tone-citizen-earned"></strong>
+        </p>
+
+        <div class="button-row">
+          <button id="restart-tone-btn">Practice Again</button>
+          <a class="button" href="village.html">Return to Village</a>
+        </div>
+      </section>
+    </main>
+
+    <script src="js/state.js"></script>
+    <script src="js/tone-practice.js"></script>
+  </body>
+</html>

@@ -325,6 +325,8 @@ function loadState() {
 
       if (word.quizCorrectCount === undefined) word.quizCorrectCount = 0;
       if (word.quizWrongCount === undefined) word.quizWrongCount = 0;
+      if (word.toneCorrectCount === undefined) word.toneCorrectCount = 0;
+      if (word.toneWrongCount === undefined) word.toneWrongCount = 0;
     });
     saveState(state);
     return state;

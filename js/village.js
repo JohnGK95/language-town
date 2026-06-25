@@ -1016,7 +1016,29 @@ function openBuildingModal(buildingId) {
 
   document.getElementById("building-modal").classList.remove("hidden");
   const marketActions = document.getElementById("market-actions");
+  const schoolActions = document.getElementById("school-actions");
+  const tonePracticeLink = document.getElementById("tone-practice-link");
+  const tonePracticeLockedMessage = document.getElementById(
+    "tone-practice-locked-message",
+  );
 
+  if (schoolActions) {
+    if (buildingId === "school") {
+      schoolActions.classList.remove("hidden");
+
+      const schoolLevel = savedBuilding.level || 1;
+
+      if (schoolLevel >= 2) {
+        tonePracticeLink.classList.remove("hidden");
+        tonePracticeLockedMessage.classList.add("hidden");
+      } else {
+        tonePracticeLink.classList.add("hidden");
+        tonePracticeLockedMessage.classList.remove("hidden");
+      }
+    } else {
+      schoolActions.classList.add("hidden");
+    }
+  }
   if (marketActions) {
     if (buildingId === "market") {
       marketActions.classList.remove("hidden");

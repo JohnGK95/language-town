@@ -1,6 +1,7 @@
 let currentWordIndex = 0;
 let previousWordIndex = null;
 let currentStudyWords = [];
+let studiedWordIdsThisSession = [];
 
 function populateStudyFilters() {
   const state = getState();
@@ -131,6 +132,7 @@ function startStudySession() {
   }
 
   currentStudyWords = shuffleArray(words).slice(0, studyCount);
+  studiedWordIdsThisSession = [];
 
   message.textContent = `Studying ${currentStudyWords.length} word(s).`;
 
@@ -185,8 +187,21 @@ function loadStudyWord() {
     return;
   }
 
-  currentWordIndex = getRandomWordIndex(currentStudyWords.length);
-  previousWordIndex = currentWordIndex;
+  const remainingWords = currentStudyWords.filter((word, index) => {
+    return !studiedWordIdsThisSession.includes(index);
+  });
+
+  if (remainingWords.length === 0) {
+    endStudySession();
+    return;
+  }
+
+  const remainingIndexes = currentStudyWords
+    .map((word, index) => index)
+    .filter((index) => !studiedWordIdsThisSession.includes(index));
+
+  currentWordIndex =
+    remainingIndexes[Math.floor(Math.random() * remainingIndexes.length)];
 
   const currentWord = currentStudyWords[currentWordIndex];
 
@@ -276,10 +291,28 @@ function completeReview(difficulty) {
   saveState(state);
 
   currentStudyWords[currentWordIndex] = savedWord;
+  studiedWordIdsThisSession.push(currentWordIndex);
 
   loadStudyWord();
 }
+function endStudySession() {
+  document.getElementById("study-word").textContent = "Study session complete!";
+  document.getElementById("study-pronunciation").textContent = "";
+  document.getElementById("study-meaning").textContent =
+    "You reviewed all selected words.";
+  document.getElementById("study-meaning").classList.remove("hidden");
 
+  document.getElementById("study-mastery").classList.add("hidden");
+  document.getElementById("study-example").classList.add("hidden");
+
+  document.getElementById("show-answer-btn").classList.add("hidden");
+  document.getElementById("forgot-btn").classList.add("hidden");
+  document.getElementById("hard-btn").classList.add("hidden");
+  document.getElementById("easy-btn").classList.add("hidden");
+
+  document.getElementById("study-settings-message").textContent =
+    "Session finished. Start a new session to study more words.";
+}
 function handleNewLearnedWord(state) {
   if (!state.village.population) {
     state.village.population = {
