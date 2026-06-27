@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Testing | Language Town</title>
+
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+
+  <body>
+    <header class="top-bar">
+      <div>
+        <h1>Testing Tools</h1>
+        <p>Adjust progress and resources while building Language Town.</p>
+      </div>
+
+      <nav>
+        <a href="index.html">Home</a>
+        <a href="vocab.html">Vocabulary</a>
+        <a href="study.html">Study</a>
+        <a href="quiz.html">Quiz</a>
+        <a href="village.html">Village</a>
+        <a href="villagers.html">Villagers</a>
+        <a href="testing.html">Testing</a>
+      </nav>
+    </header>
+
+    <main class="page testing-page">
+      <section class="card testing-panel">
+        <h2>Current Test State</h2>
+        <div id="testing-summary" class="testing-summary"></div>
+      </section>
+
+      <section class="card testing-panel">
+        <h2>Level Testing</h2>
+
+        <label>
+          Target Level
+          <input id="target-level" type="number" min="1" max="20" value="3" />
+        </label>
+
+        <div class="button-row">
+          <button id="prepare-next-level-btn">Prepare Next Level</button>
+          <button id="level-to-target-btn">Prepare and Level to Target</button>
+        </div>
+
+        <p class="helper-text">
+          This adds the XP, vocabulary progress, citizens, and building levels required by the normal level rules.
+        </p>
+      </section>
+
+      <section class="card testing-panel">
+        <h2>Resources</h2>
+
+        <div class="testing-resource-grid">
+          <label>Coins <input id="add-coins" type="number" min="0" value="100" /></label>
+          <label>Knowledge <input id="add-knowledge" type="number" min="0" value="100" /></label>
+          <label>Wood <input id="add-wood" type="number" min="0" value="100" /></label>
+          <label>Culture <input id="add-culture" type="number" min="0" value="25" /></label>
+          <label>Rice <input id="add-rice" type="number" min="0" value="10" /></label>
+          <label>Wheat <input id="add-wheat" type="number" min="0" value="10" /></label>
+          <label>Soybean <input id="add-soybean" type="number" min="0" value="10" /></label>
+          <label>Green Onion <input id="add-green-onion" type="number" min="0" value="10" /></label>
+          <label>Tea <input id="add-tea" type="number" min="0" value="10" /></label>
+        </div>
+
+        <div class="button-row">
+          <button id="add-resources-btn">Add Resources</button>
+          <button id="max-common-resources-btn">Add 1,000 Common Resources</button>
+        </div>
+      </section>
+
+      <section class="card testing-panel">
+        <h2>Buildings and Unlocks</h2>
+
+        <div class="testing-resource-grid">
+          <label>Town Hall <input id="set-town-hall-level" type="number" min="1" value="1" /></label>
+          <label>Library <input id="set-library-level" type="number" min="1" value="1" /></label>
+          <label>School <input id="set-school-level" type="number" min="1" value="2" /></label>
+          <label>Market <input id="set-market-level" type="number" min="1" value="1" /></label>
+          <label>Lumber Mill <input id="set-lumber-mill-level" type="number" min="1" value="1" /></label>
+          <label>Farm <input id="set-farm-level" type="number" min="1" value="1" /></label>
+        </div>
+
+        <div class="button-row">
+          <button id="apply-building-levels-btn">Apply Building Levels</button>
+          <button id="unlock-tone-practice-btn">Unlock Tone Practice</button>
+        </div>
+      </section>
+
+      <section class="card testing-panel danger-zone">
+        <h2>Reset</h2>
+        <p class="helper-text">This clears the saved local test state and reloads the app.</p>
+        <button id="reset-testing-state-btn">Reset Saved State</button>
+      </section>
+
+      <section class="card testing-panel">
+        <h2>Result</h2>
+        <p id="testing-message">Ready.</p>
+      </section>
+    </main>
+
+    <script src="js/state.js"></script>
+    <script src="js/testing.js"></script>
+  </body>
+</html>

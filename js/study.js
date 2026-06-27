@@ -1,3 +1,17 @@
+function renderTonePracticeAccess() {
+  const container = document.getElementById("tone-practice-access");
+
+  if (!container) return;
+
+  if (canUseTonePractice()) {
+    container.innerHTML = '<a class="button" href="tone-practice.html">Tone Practice</a>';
+    return;
+  }
+
+  container.innerHTML =
+    '<p class="helper-text">Tone Practice unlocks when the School reaches Level 2.</p>';
+}
+
 let currentWordIndex = 0;
 let previousWordIndex = null;
 let currentStudyWords = [];
@@ -362,6 +376,7 @@ function getStudyNextCitizenRequirement(currentPopulation) {
 
 document.addEventListener("DOMContentLoaded", () => {
   populateStudyFilters();
+  renderTonePracticeAccess();
 
   const startStudyBtn = document.getElementById("start-study-btn");
 

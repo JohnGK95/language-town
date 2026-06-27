@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <title>Study | Language Village</title>
+    <title>Study | Language Town</title>
 
     <link rel="stylesheet" href="css/styles.css" />
   </head>
@@ -23,70 +23,73 @@
         <a href="village.html">Village</a>
         <a href="quiz.html">Quiz</a>
         <a href="villagers.html">Villagers</a>
+              <a href="testing.html">Testing</a>
       </nav>
     </header>
 
     <main class="page">
-      <section class="card study-settings">
-  <h2>Study Settings</h2>
+            <section class="card study-settings">
+        <h2>Study Settings</h2>
 
-  <label>
-    Language
-    <select id="study-language">
-      <option value="all">All Languages</option>
-    </select>
-  </label>
+        <label>
+          Language
+          <select id="study-language">
+            <option value="all">All Languages</option>
+          </select>
+        </label>
 
-  <label>
-    Level
-    <select id="study-level">
-      <option value="all">All Levels</option>
-    </select>
-  </label>
+        <label>
+          Level
+          <select id="study-level">
+            <option value="all">All Levels</option>
+          </select>
+        </label>
 
-  <label>
-    Pack
-    <select id="study-pack">
-      <option value="all">All Packs</option>
-    </select>
-  </label>
+        <label>
+          Pack
+          <select id="study-pack">
+            <option value="all">All Packs</option>
+          </select>
+        </label>
 
-  <label>
-    Group
-    <select id="study-group">
-      <option value="all">All Groups</option>
-    </select>
-  </label>
+        <label>
+          Group
+          <select id="study-group">
+            <option value="all">All Groups</option>
+          </select>
+        </label>
 
-  <label>
-    Tag
-    <select id="study-tag">
-      <option value="all">All Tags</option>
-    </select>
-  </label>
-<label>
-  Mastery
-  <select id="study-mastery-filter">
-    <option value="all">All Words</option>
-    <option value="new">New ⭐</option>
-    <option value="familiar">Familiar ⭐⭐</option>
-    <option value="learned">Learned ⭐⭐⭐</option>
-    <option value="mastered">Mastered ⭐⭐⭐⭐</option>
-  </select>
-</label>
-  <label>
-    Number of Words
-    <input id="study-count" type="number" min="1" value="10" />
-  </label>
+        <label>
+          Tag
+          <select id="study-tag">
+            <option value="all">All Tags</option>
+          </select>
+        </label>
 
-  <button id="start-study-btn">Start Studying</button>
+        <label>
+          Mastery
+          <select id="study-mastery-filter">
+            <option value="all">All Words</option>
+            <option value="new">New ⭐</option>
+            <option value="familiar">Familiar ⭐⭐</option>
+            <option value="learned">Learned ⭐⭐⭐</option>
+            <option value="mastered">Mastered ⭐⭐⭐⭐</option>
+          </select>
+        </label>
 
-  <p id="study-settings-message"></p>
-</section>
+        <label>
+          Number of Words
+          <input id="study-count" type="number" min="1" value="10" />
+        </label>
+
+        <div class="button-row">
+          <button id="start-study-btn">Start Studying</button>
+          <span id="tone-practice-access"></span>
+        </div>
 
         <p id="study-settings-message"></p>
       </section>
-      <section class="card study-card">
+<section class="card study-card">
         <h2 id="study-word">No words yet</h2>
 
         <p id="study-pronunciation"></p>

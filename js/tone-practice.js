@@ -3,6 +3,58 @@ let currentToneIndex = 0;
 let correctToneAnswers = 0;
 let toneKnowledgeEarned = 0;
 let toneCitizenProgressEarned = 0;
+let toneCitizensAdded = 0;
+
+const MARKED_TONE_MAP = {
+  ā: 1,
+  á: 2,
+  ǎ: 3,
+  à: 4,
+  ē: 1,
+  é: 2,
+  ě: 3,
+  è: 4,
+  ī: 1,
+  í: 2,
+  ǐ: 3,
+  ì: 4,
+  ō: 1,
+  ó: 2,
+  ǒ: 3,
+  ò: 4,
+  ū: 1,
+  ú: 2,
+  ǔ: 3,
+  ù: 4,
+  ǖ: 1,
+  ǘ: 2,
+  ǚ: 3,
+  ǜ: 4,
+  Ā: 1,
+  Á: 2,
+  Ǎ: 3,
+  À: 4,
+  Ē: 1,
+  É: 2,
+  Ě: 3,
+  È: 4,
+  Ī: 1,
+  Í: 2,
+  Ǐ: 3,
+  Ì: 4,
+  Ō: 1,
+  Ó: 2,
+  Ǒ: 3,
+  Ò: 4,
+  Ū: 1,
+  Ú: 2,
+  Ǔ: 3,
+  Ù: 4,
+  Ǖ: 1,
+  Ǘ: 2,
+  Ǚ: 3,
+  Ǜ: 4,
+};
 
 function populateToneFilters() {
   const state = getState();
@@ -65,6 +117,84 @@ function shuffleArray(array) {
   return [...array].sort(() => Math.random() - 0.5);
 }
 
+function extractTonePattern(pronunciation) {
+  if (!pronunciation) return "";
+
+  const syllables = pronunciation
+    .replace(/[，。！？,.!?;:()]/g, " ")
+    .split(/\s+/)
+    .map((syllable) => syllable.trim())
+    .filter(Boolean);
+
+  return syllables
+    .map(getSyllableTone)
+    .filter((tone) => tone !== null)
+    .join("-");
+}
+
+function getSyllableTone(syllable) {
+  const numberedTone = syllable.match(/[1-5]$/);
+
+  if (numberedTone) {
+    return numberedTone[0];
+  }
+
+  for (const character of syllable) {
+    if (MARKED_TONE_MAP[character]) {
+      return String(MARKED_TONE_MAP[character]);
+    }
+  }
+
+  if (/^[a-züv:]+$/i.test(syllable)) {
+    return "5";
+  }
+
+  return null;
+}
+
+function formatTonePattern(pattern) {
+  return "Tone pattern " + pattern;
+}
+
+function createToneDistractors(correctPattern) {
+  const tones = correctPattern.split("-");
+  const distractors = new Set();
+
+  for (let i = 0; i < tones.length; i++) {
+    for (let tone = 1; tone <= 5; tone++) {
+      const replacement = String(tone);
+
+      if (replacement === tones[i]) continue;
+
+      const variant = [...tones];
+      variant[i] = replacement;
+      distractors.add(variant.join("-"));
+    }
+  }
+
+  if (tones.length > 1) {
+    distractors.add([...tones].reverse().join("-"));
+  }
+
+  return shuffleArray([...distractors]).slice(0, 3);
+}
+
+function getToneOptions(word) {
+  const correctPattern = extractTonePattern(word.pronunciation);
+  const customDistractors = [
+    word.toneDistractor1,
+    word.toneDistractor2,
+    word.toneDistractor3,
+  ]
+    .map(extractTonePattern)
+    .filter((pattern) => pattern && pattern !== correctPattern);
+
+  const generatedDistractors = createToneDistractors(correctPattern);
+  const options = [correctPattern, ...customDistractors, ...generatedDistractors];
+
+  return shuffleArray([...new Set(options)].slice(0, 4));
+}
+
 function getToneMasteryStatus(word) {
   const correct = word.toneCorrectCount || 0;
 
@@ -78,11 +208,11 @@ function getToneMasteryStatus(word) {
 function getToneMasteryLabel(word) {
   const status = getToneMasteryStatus(word);
 
-  if (status === "mastered") return "Tone Mastered 🎵🎵🎵🎵";
-  if (status === "learned") return "Tone Learned 🎵🎵🎵";
-  if (status === "familiar") return "Tone Familiar 🎵🎵";
+  if (status === "mastered") return "Tone Mastered";
+  if (status === "learned") return "Tone Learned";
+  if (status === "familiar") return "Tone Familiar";
 
-  return "New Tone Practice 🎵";
+  return "New Tone Practice";
 }
 
 function getFilteredToneWords() {
@@ -96,13 +226,7 @@ function getFilteredToneWords() {
   const selectedMastery = document.getElementById("tone-mastery-filter").value;
 
   let availableWords = state.vocab.filter((word) => {
-    return (
-      word.tonePractice &&
-      word.pronunciation &&
-      word.toneDistractor1 &&
-      word.toneDistractor2 &&
-      word.toneDistractor3
-    );
+    return word.pronunciation && extractTonePattern(word.pronunciation);
   });
 
   if (selectedLanguage !== "all") {
@@ -112,21 +236,15 @@ function getFilteredToneWords() {
   }
 
   if (selectedLevel !== "all") {
-    availableWords = availableWords.filter(
-      (word) => word.level === selectedLevel,
-    );
+    availableWords = availableWords.filter((word) => word.level === selectedLevel);
   }
 
   if (selectedPack !== "all") {
-    availableWords = availableWords.filter(
-      (word) => word.pack === selectedPack,
-    );
+    availableWords = availableWords.filter((word) => word.pack === selectedPack);
   }
 
   if (selectedGroup !== "all") {
-    availableWords = availableWords.filter(
-      (word) => word.group === selectedGroup,
-    );
+    availableWords = availableWords.filter((word) => word.group === selectedGroup);
   }
 
   if (selectedTag !== "all") {
@@ -143,10 +261,7 @@ function getFilteredToneWords() {
 }
 
 function startTonePractice() {
-  const state = getState();
-  const schoolLevel = state.village.buildings.school?.level || 1;
-
-  if (schoolLevel < 2) {
+  if (!canUseTonePractice()) {
     document.getElementById("tone-setup-message").textContent =
       "Tone Practice unlocks when School reaches Level 2.";
     return;
@@ -160,7 +275,7 @@ function startTonePractice() {
 
   if (availableWords.length < 1) {
     document.getElementById("tone-setup-message").textContent =
-      "No tone practice words match these filters.";
+      "No words with readable pinyin tones match these filters.";
     return;
   }
 
@@ -170,6 +285,7 @@ function startTonePractice() {
   correctToneAnswers = 0;
   toneKnowledgeEarned = 0;
   toneCitizenProgressEarned = 0;
+  toneCitizensAdded = 0;
 
   document.getElementById("tone-setup").classList.add("hidden");
   document.getElementById("tone-results").classList.add("hidden");
@@ -183,13 +299,14 @@ function startTonePractice() {
 
 function showToneQuestion() {
   const currentWord = toneWords[currentToneIndex];
+  const prompt =
+    currentWord.tonePractice || "Choose the correct tone pattern for this word.";
 
   document.getElementById("current-tone-number").textContent =
     currentToneIndex + 1;
 
   document.getElementById("tone-word").textContent = currentWord.word;
-  document.getElementById("tone-practice-prompt").textContent =
-    currentWord.tonePractice;
+  document.getElementById("tone-practice-prompt").textContent = prompt;
 
   document.getElementById("tone-feedback").textContent = "";
   document.getElementById("tone-answer-details").classList.add("hidden");
@@ -198,16 +315,10 @@ function showToneQuestion() {
   const toneOptions = document.getElementById("tone-options");
   toneOptions.innerHTML = "";
 
-  const options = shuffleArray([
-    currentWord.pronunciation,
-    currentWord.toneDistractor1,
-    currentWord.toneDistractor2,
-    currentWord.toneDistractor3,
-  ]);
-
-  options.forEach((option) => {
+  getToneOptions(currentWord).forEach((option) => {
     const button = document.createElement("button");
-    button.textContent = option;
+    button.textContent = formatTonePattern(option);
+    button.dataset.tonePattern = option;
     button.addEventListener("click", () =>
       checkToneAnswer(option, currentWord, button),
     );
@@ -216,14 +327,15 @@ function showToneQuestion() {
   });
 }
 
-function checkToneAnswer(selectedPronunciation, correctWord, selectedButton) {
+function checkToneAnswer(selectedPattern, correctWord, selectedButton) {
   const toneButtons = document.querySelectorAll("#tone-options button");
-  const isCorrect = selectedPronunciation === correctWord.pronunciation;
+  const correctPattern = extractTonePattern(correctWord.pronunciation);
+  const isCorrect = selectedPattern === correctPattern;
 
   toneButtons.forEach((button) => {
     button.disabled = true;
 
-    if (button.textContent === correctWord.pronunciation) {
+    if (button.dataset.tonePattern === correctPattern) {
       button.classList.add("correct-answer");
     }
   });
@@ -235,17 +347,21 @@ function checkToneAnswer(selectedPronunciation, correctWord, selectedButton) {
     toneKnowledgeEarned += 1;
     toneCitizenProgressEarned += 1;
 
+    const rewardResult = addKnowledgeAndCitizenProgress(1, 1);
+    toneCitizensAdded += rewardResult.citizensAdded;
+
     document.getElementById("tone-feedback").textContent =
-      "Correct! +1 knowledge and +1 citizen progress.";
+      rewardResult.citizensAdded > 0
+        ? "Correct! +1 knowledge, +1 citizen progress, and a new citizen joined."
+        : "Correct! +1 knowledge and +1 citizen progress.";
   } else {
     selectedButton.classList.add("wrong-answer");
 
     document.getElementById("tone-feedback").textContent =
-      "Not quite. The correct tones are shown.";
+      "Not quite. The correct tone pattern is shown.";
   }
 
   updateToneProgress(correctWord, isCorrect);
-
   showToneAnswerDetails(correctWord);
 
   document.getElementById("next-tone-btn").classList.remove("hidden");
@@ -274,60 +390,11 @@ function updateToneProgress(correctWord, isCorrect) {
 
   if (isCorrect) {
     savedWord.toneCorrectCount += 1;
-    state.resources.knowledge += 1;
-    handleToneCitizenProgress(state);
   } else {
     savedWord.toneWrongCount += 1;
   }
 
   saveState(state);
-}
-
-function handleToneCitizenProgress(state) {
-  if (!state.village.population) {
-    state.village.population = {
-      current: 0,
-      learnedWordsSinceLastCitizen: 0,
-      nextCitizenRequirement: 25,
-    };
-  }
-
-  const populationCap = calculateTonePopulationCap(state);
-
-  if (state.village.population.current >= populationCap) {
-    state.village.population.learnedWordsSinceLastCitizen = 0;
-    return;
-  }
-
-  state.village.population.learnedWordsSinceLastCitizen += 1;
-
-  if (
-    state.village.population.learnedWordsSinceLastCitizen >=
-    state.village.population.nextCitizenRequirement
-  ) {
-    state.village.population.current += 1;
-    state.village.population.learnedWordsSinceLastCitizen = 0;
-    state.village.population.nextCitizenRequirement =
-      getToneNextCitizenRequirement(state.village.population.current);
-  }
-}
-
-function calculateTonePopulationCap(state) {
-  const basePopulationCap = 5;
-
-  const housePopulationCap = state.village.placedItems
-    .filter((item) => item.type === "house")
-    .reduce((total, house) => {
-      return total + (house.level || 1);
-    }, 0);
-
-  return basePopulationCap + housePopulationCap;
-}
-
-function getToneNextCitizenRequirement(currentPopulation) {
-  if (currentPopulation === 0) return 25;
-  if (currentPopulation === 1) return 50;
-  return 100;
 }
 
 function showToneAnswerDetails(word) {
@@ -344,8 +411,7 @@ function showToneAnswerDetails(word) {
   document.getElementById("tone-detail-word").textContent = word.word;
   document.getElementById("tone-detail-pronunciation").textContent =
     word.pronunciation || "";
-  document.getElementById("tone-detail-meaning").textContent =
-    word.meaning || "";
+  document.getElementById("tone-detail-meaning").textContent = word.meaning || "";
 
   document.getElementById("tone-detail-progress").textContent = savedWord
     ? getToneMasteryLabel(savedWord)
@@ -369,13 +435,15 @@ function finishTonePractice() {
   document.getElementById("tone-results").classList.remove("hidden");
 
   document.getElementById("tone-score").textContent =
-    `${correctToneAnswers} / ${toneWords.length}`;
+    correctToneAnswers + " / " + toneWords.length;
 
   document.getElementById("tone-knowledge-earned").textContent =
     toneKnowledgeEarned;
 
   document.getElementById("tone-citizen-earned").textContent =
-    toneCitizenProgressEarned;
+    toneCitizensAdded > 0
+      ? toneCitizenProgressEarned + " progress, " + toneCitizensAdded + " new citizen(s)"
+      : toneCitizenProgressEarned;
 }
 
 function restartTonePractice() {
@@ -383,8 +451,23 @@ function restartTonePractice() {
   document.getElementById("tone-setup").classList.remove("hidden");
 }
 
+function renderTonePracticeLockState() {
+  const startButton = document.getElementById("start-tone-btn");
+  const message = document.getElementById("tone-setup-message");
+
+  if (canUseTonePractice()) {
+    startButton.disabled = false;
+    message.textContent = "";
+    return;
+  }
+
+  startButton.disabled = true;
+  message.textContent = "Tone Practice unlocks when School reaches Level 2.";
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   populateToneFilters();
+  renderTonePracticeLockState();
 
   document
     .getElementById("start-tone-btn")

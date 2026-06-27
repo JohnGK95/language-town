@@ -722,3 +722,59 @@ td[contenteditable="true"]:focus {
 .talk-villager-btn {
   margin-top: 10px;
 }
+
+.testing-page {
+  display: grid;
+  gap: 20px;
+}
+
+.testing-panel label {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.testing-panel input,
+.testing-panel select {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  font: inherit;
+}
+
+.testing-summary,
+.testing-resource-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.testing-summary div {
+  background: #f4f1e8;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.testing-summary span {
+  display: block;
+  font-size: 13px;
+  color: #5f5f5f;
+  margin-bottom: 6px;
+}
+
+.testing-summary strong {
+  font-size: 20px;
+}
+
+.helper-text {
+  color: #5f5f5f;
+  line-height: 1.45;
+}
+
+.danger-zone button {
+  background: #9d0208;
+}
+
+.danger-zone button:hover {
+  background: #7a0106;
+}

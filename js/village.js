@@ -8,8 +8,10 @@ let selectedTile = null;
 let movingBuildingId = null;
 let movingPlacedItem = null;
 let selectedHouse = null;
+let selectedFarm = null;
 let builderAction = null;
 let selectedBuildItem = null;
+
 const MAP_UNLOCKS = {
   start: {
     name: "Starting Area",
@@ -44,6 +46,7 @@ const MAP_UNLOCKS = {
     requiredLevel: 18,
   },
 };
+
 const BUILDING_DATA = {
   townHall: {
     id: "townHall",
@@ -88,6 +91,7 @@ const BUILDING_DATA = {
       coins: 75,
     },
   },
+
   lumberMill: {
     id: "lumberMill",
     name: "Lumber Mill",
@@ -102,6 +106,7 @@ const BUILDING_DATA = {
       knowledge: 50,
     },
   },
+
   school: {
     id: "school",
     name: "School",
@@ -155,7 +160,6 @@ const PLACEABLE_ITEMS = {
       wood: 10,
     },
   },
-
   farm: {
     name: "Farm",
     icon: "🌾",
@@ -165,7 +169,6 @@ const PLACEABLE_ITEMS = {
       wood: 25,
     },
   },
-
   shrine: {
     name: "Shrine",
     icon: "⛩️",
@@ -175,7 +178,6 @@ const PLACEABLE_ITEMS = {
       knowledge: 50,
     },
   },
-
   bench: {
     name: "Bench",
     icon: "🪑",
@@ -214,6 +216,34 @@ const CROP_DATA = {
   },
 };
 
+/* ---------------------------------------
+   General DOM helpers
+--------------------------------------- */
+
+function setText(id, text) {
+  const element = document.getElementById(id);
+  if (element) element.textContent = text;
+}
+
+function showElement(id) {
+  const element = document.getElementById(id);
+  if (element) element.classList.remove("hidden");
+}
+
+function hideElement(id) {
+  const element = document.getElementById(id);
+  if (element) element.classList.add("hidden");
+}
+
+function addClickListener(id, callback) {
+  const element = document.getElementById(id);
+  if (element) element.addEventListener("click", callback);
+}
+
+/* ---------------------------------------
+   Map rendering
+--------------------------------------- */
+
 function renderVillage() {
   const map = document.getElementById("village-map");
   const state = getState();
@@ -229,6 +259,8 @@ function renderVillage() {
     const y = Math.floor(i / MAP_WIDTH) + 1;
 
     tile.classList.add("map-tile");
+    tile.style.gridColumn = `${x} / span 1`;
+    tile.style.gridRow = `${y} / span 1`;
 
     if (!isTileUnlocked(x, y)) {
       tile.classList.add("locked-map-tile");
@@ -239,21 +271,7 @@ function renderVillage() {
       tile.classList.add("build-mode-active");
     }
 
-    tile.style.gridColumn = `${x} / span 1`;
-    tile.style.gridRow = `${y} / span 1`;
-
-    tile.addEventListener("click", () => {
-      if (!isTileUnlocked(x, y)) {
-        const section = getMapSectionForTile(x, y);
-
-        document.getElementById("build-mode-message").textContent =
-          `${section.name} unlocks at Level ${section.requiredLevel}.`;
-
-        return;
-      }
-
-      handleTileClick(x, y);
-    });
+    tile.addEventListener("click", () => handleMapTileClick(x, y));
 
     map.appendChild(tile);
   }
@@ -261,7 +279,26 @@ function renderVillage() {
   renderPlacedItems(state);
   renderBuildings();
   renderPopulation();
+  renderCropCapacityHud();
 }
+
+function handleMapTileClick(x, y) {
+  if (!isTileUnlocked(x, y)) {
+    const section = getMapSectionForTile(x, y);
+
+    if (section) {
+      setText(
+        "build-mode-message",
+        `${section.name} unlocks at Level ${section.requiredLevel}.`,
+      );
+    }
+
+    return;
+  }
+
+  handleTileClick(x, y);
+}
+
 function getMapSectionForTile(x, y) {
   return Object.values(MAP_UNLOCKS).find((section) => {
     return (
@@ -281,12 +318,19 @@ function isTileUnlocked(x, y) {
 
   return state.player.level >= section.requiredLevel;
 }
+
+/* ---------------------------------------
+   Main buildings
+--------------------------------------- */
+
 function renderBuildings() {
   const map = document.getElementById("village-map");
   const state = getState();
 
+  if (!map) return;
+
   Object.values(BUILDING_DATA).forEach((building) => {
-    const savedBuilding = state.village.buildings[building.id];
+    const savedBuilding = getSavedBuildingState(state, building.id);
 
     const buildingElement = document.createElement("button");
 
@@ -298,174 +342,172 @@ function renderBuildings() {
     }
 
     buildingElement.style.gridColumn = `${savedBuilding.x} / span ${savedBuilding.width}`;
-
     buildingElement.style.gridRow = `${savedBuilding.y} / span ${savedBuilding.height}`;
 
     buildingElement.addEventListener("click", (event) => {
       event.stopPropagation();
-
-      if (!buildMode) {
-        openBuildingModal(building.id);
-        return;
-      }
-
-      if (builderAction === "move") {
-        movingBuildingId = building.id;
-        movingPlacedItem = null;
-
-        document.getElementById("builder-menu-message").textContent =
-          `Moving ${building.name}. Click an empty area to place it.`;
-
-        renderVillage();
-        return;
-      }
-
-      if (builderAction === "bulldoze") {
-        document.getElementById("builder-menu-message").textContent =
-          "Main buildings cannot be bulldozed.";
-      }
+      handleBuildingClick(building.id);
     });
 
     map.appendChild(buildingElement);
   });
 }
-let selectedFarm = null;
 
-function getUnlockedCrops() {
-  const state = getState();
-  const level = state.player.level;
+function getSavedBuildingState(state, buildingId) {
+  const baseBuilding = BUILDING_DATA[buildingId];
 
-  return Object.entries(CROP_DATA)
-    .filter(([, crop]) => level >= crop.unlockLevel)
-    .map(([cropId]) => cropId);
-}
+  if (!state.village.buildings[buildingId]) {
+    state.village.buildings[buildingId] = {
+      name: baseBuilding.name,
+      level: 1,
+      x: baseBuilding.x,
+      y: baseBuilding.y,
+      width: baseBuilding.width,
+      height: baseBuilding.height,
+    };
 
-function openFarmModal(x, y) {
-  const state = getState();
-
-  const farm = state.village.placedItems.find((item) => {
-    return item.type === "farm" && item.x === x && item.y === y;
-  });
-
-  if (!farm) return;
-
-  if (!farm.level) farm.level = 1;
-  if (!farm.cropSlots) farm.cropSlots = [];
-
-  selectedFarm = { x, y };
-
-  document.getElementById("farm-level").textContent = farm.level;
-  document.getElementById("farm-slots").textContent = farm.level;
-
-  renderFarmCropSlots(farm);
-
-  document.getElementById("farm-message").textContent = "";
-  document.getElementById("farm-modal").classList.remove("hidden");
-
-  saveState(state);
-}
-
-function renderFarmCropSlots(farm) {
-  const container = document.getElementById("farm-crop-slots");
-  const unlockedCrops = getUnlockedCrops();
-
-  container.innerHTML = "";
-
-  for (let i = 0; i < farm.level; i++) {
-    const currentCrop = farm.cropSlots[i] || "";
-
-    const row = document.createElement("div");
-    row.classList.add("farm-slot-row");
-
-    row.innerHTML = `
-      <label>
-        Slot ${i + 1}
-        <select data-slot-index="${i}">
-          <option value="">Empty</option>
-          ${unlockedCrops
-            .map((cropId) => {
-              const crop = CROP_DATA[cropId];
-              return `
-                <option value="${cropId}" ${currentCrop === cropId ? "selected" : ""}>
-                  ${crop.icon} ${crop.name}
-                </option>
-              `;
-            })
-            .join("")}
-        </select>
-      </label>
-    `;
-
-    container.appendChild(row);
+    saveState(state);
   }
 
-  container.querySelectorAll("select").forEach((select) => {
-    select.addEventListener("change", updateFarmCropSlot);
-  });
+  const savedBuilding = state.village.buildings[buildingId];
+
+  savedBuilding.name = savedBuilding.name || baseBuilding.name;
+  savedBuilding.level = savedBuilding.level || 1;
+  savedBuilding.x = savedBuilding.x || baseBuilding.x;
+  savedBuilding.y = savedBuilding.y || baseBuilding.y;
+  savedBuilding.width = savedBuilding.width || baseBuilding.width;
+  savedBuilding.height = savedBuilding.height || baseBuilding.height;
+
+  return savedBuilding;
 }
 
-function updateFarmCropSlot(event) {
-  if (!selectedFarm) return;
+function handleBuildingClick(buildingId) {
+  const building = BUILDING_DATA[buildingId];
 
-  const state = getState();
+  if (!buildMode) {
+    openBuildingModal(buildingId);
+    return;
+  }
 
-  const farm = state.village.placedItems.find((item) => {
-    return (
-      item.type === "farm" &&
-      item.x === selectedFarm.x &&
-      item.y === selectedFarm.y
+  if (builderAction === "move") {
+    movingBuildingId = buildingId;
+    movingPlacedItem = null;
+
+    setText(
+      "builder-menu-message",
+      `Moving ${building.name}. Click an empty area to place it.`,
     );
-  });
 
-  if (!farm) return;
+    renderVillage();
+    return;
+  }
 
-  const slotIndex = Number(event.target.dataset.slotIndex);
-  const cropId = event.target.value;
-
-  farm.cropSlots[slotIndex] = cropId;
-
-  saveState(state);
-
-  document.getElementById("farm-message").textContent = "Crop selection saved.";
+  if (builderAction === "bulldoze") {
+    setText("builder-menu-message", "Main buildings cannot be bulldozed.");
+  }
 }
 
-function collectCrops() {
-  if (!selectedFarm) return;
-
+function openBuildingModal(buildingId) {
   const state = getState();
+  const building = BUILDING_DATA[buildingId];
 
-  const farm = state.village.placedItems.find((item) => {
-    return (
-      item.type === "farm" &&
-      item.x === selectedFarm.x &&
-      item.y === selectedFarm.y
-    );
-  });
+  if (!building) return;
 
-  if (!farm || !farm.cropSlots) return;
+  selectedBuildingId = buildingId;
 
-  farm.cropSlots.forEach((cropId) => {
-    if (!cropId) return;
+  const savedBuilding = getSavedBuildingState(state, buildingId);
 
-    if (!state.resources[cropId]) {
-      state.resources[cropId] = 0;
+  setText("modal-building-name", building.name);
+  setText("modal-owner", `Manager: ${building.owner}`);
+  setText("modal-dialogue", building.dialogue);
+  setText("modal-building-level", savedBuilding.level);
+  setText(
+    "modal-upgrade-cost",
+    `Upgrade Cost: ${formatCost(building.upgradeCost)}`,
+  );
+  setText("modal-message", "");
+
+  renderBuildingActions(buildingId, savedBuilding.level);
+
+  showElement("building-modal");
+}
+
+function renderBuildingActions(buildingId, buildingLevel) {
+  const marketActions = document.getElementById("market-actions");
+  const schoolActions = document.getElementById("school-actions");
+  const tonePracticeLink = document.getElementById("tone-practice-link");
+  const tonePracticeLockedMessage = document.getElementById(
+    "tone-practice-locked-message",
+  );
+
+  if (marketActions) {
+    if (buildingId === "market") {
+      marketActions.classList.remove("hidden");
+    } else {
+      marketActions.classList.add("hidden");
     }
+  }
 
-    state.resources[cropId] += 1;
-  });
+  if (schoolActions) {
+    if (buildingId === "school") {
+      schoolActions.classList.remove("hidden");
+
+      if (tonePracticeLink && tonePracticeLockedMessage) {
+        if (buildingLevel >= 2) {
+          tonePracticeLink.classList.remove("hidden");
+          tonePracticeLockedMessage.classList.add("hidden");
+        } else {
+          tonePracticeLink.classList.add("hidden");
+          tonePracticeLockedMessage.classList.remove("hidden");
+        }
+      }
+    } else {
+      schoolActions.classList.add("hidden");
+    }
+  }
+}
+
+function closeBuildingModal() {
+  hideElement("building-modal");
+}
+
+function upgradeSelectedBuilding() {
+  if (!selectedBuildingId) return;
+
+  const state = getState();
+  const building = BUILDING_DATA[selectedBuildingId];
+  const savedBuilding = getSavedBuildingState(state, selectedBuildingId);
+
+  if (!building || !savedBuilding) return;
+
+  if (!canAffordUpgrade(state, building.upgradeCost)) {
+    setText("modal-message", "Not enough resources yet.");
+    return;
+  }
+
+  payUpgradeCost(state, building.upgradeCost);
+
+  savedBuilding.level += 1;
 
   saveState(state);
   renderState();
 
-  document.getElementById("farm-message").textContent = "Crops collected!";
+  openBuildingModal(selectedBuildingId);
+
+  setText(
+    "modal-message",
+    `${building.name} upgraded to Level ${savedBuilding.level}!`,
+  );
 }
 
-function closeFarmModal() {
-  selectedFarm = null;
-  document.getElementById("farm-modal").classList.add("hidden");
-}
+/* ---------------------------------------
+   Placeable items
+--------------------------------------- */
+
 function renderPlacedItems(state) {
   const map = document.getElementById("village-map");
+
+  if (!map) return;
 
   state.village.placedItems.forEach((item) => {
     const itemData = PLACEABLE_ITEMS[item.type];
@@ -475,144 +517,190 @@ function renderPlacedItems(state) {
     const itemElement = document.createElement("button");
 
     itemElement.classList.add("placed-item", itemData.className);
+    itemElement.title = itemData.name;
+    itemElement.style.gridColumn = `${item.x} / span 1`;
+    itemElement.style.gridRow = `${item.y} / span 1`;
+
     if (item.type === "house") {
       itemElement.textContent = `${itemData.icon} ${item.level || 1}`;
     } else {
       itemElement.textContent = itemData.icon;
     }
 
-    itemElement.title = itemData.name;
-
-    itemElement.style.gridColumn = `${item.x} / span 1`;
-    itemElement.style.gridRow = `${item.y} / span 1`;
+    if (
+      movingPlacedItem &&
+      movingPlacedItem.originalX === item.x &&
+      movingPlacedItem.originalY === item.y
+    ) {
+      itemElement.classList.add("moving-building");
+    }
 
     itemElement.addEventListener("click", (event) => {
       event.stopPropagation();
-
-      if (!buildMode) {
-        if (item.type === "house") {
-          openHouseModal(item.x, item.y);
-        }
-
-        if (item.type === "farm") {
-          openFarmModal(item.x, item.y);
-        }
-
-        return;
-      }
-
-      if (builderAction === "bulldoze") {
-        removePlacedItem(item.x, item.y);
-        document.getElementById("builder-menu-message").textContent =
-          "Item removed.";
-        return;
-      }
-
-      if (builderAction === "move") {
-        movingBuildingId = null;
-        selectedTile = { x: item.x, y: item.y };
-        movePlacedItemStart(item.x, item.y);
-      }
+      handlePlacedItemClick(item);
     });
 
     map.appendChild(itemElement);
   });
 }
-function movePlacedItemStart(x, y) {
-  const state = getState();
 
-  const item = state.village.placedItems.find((placedItem) => {
-    return placedItem.x === x && placedItem.y === y;
-  });
+function handlePlacedItemClick(item) {
+  if (!buildMode) {
+    if (item.type === "house") {
+      openHouseModal(item.x, item.y);
+      return;
+    }
 
-  if (!item) return;
+    if (item.type === "farm") {
+      openFarmModal(item.x, item.y);
+      return;
+    }
 
-  movingPlacedItem = {
-    originalX: item.x,
-    originalY: item.y,
-  };
-
-  document.getElementById("builder-menu-message").textContent =
-    `Moving ${PLACEABLE_ITEMS[item.type].name}. Click an empty tile.`;
-}
-
-function movePlacedItemToTile(x, y) {
-  if (!movingPlacedItem) return;
-
-  const state = getState();
-
-  const item = state.village.placedItems.find((placedItem) => {
-    return (
-      placedItem.x === movingPlacedItem.originalX &&
-      placedItem.y === movingPlacedItem.originalY
-    );
-  });
-
-  if (!item) return;
-
-  if (isTileOccupiedForPlacedItemMove(x, y, item)) {
-    document.getElementById("builder-menu-message").textContent =
-      "That tile is occupied.";
     return;
   }
 
-  item.x = x;
-  item.y = y;
+  if (builderAction === "bulldoze") {
+    removePlacedItem(item.x, item.y);
+    setText("builder-menu-message", "Item removed.");
+    return;
+  }
+
+  if (builderAction === "move") {
+    movingBuildingId = null;
+    selectedTile = { x: item.x, y: item.y };
+    movePlacedItemStart(item.x, item.y);
+  }
+}
+
+function placeItemAtTile(type, x, y) {
+  const state = getState();
+  const itemData = PLACEABLE_ITEMS[type];
+
+  if (!itemData) return;
+
+  if (!isBuildItemUnlocked(type)) {
+    setText("builder-menu-message", `${itemData.name} is not unlocked yet.`);
+    return;
+  }
+
+  if (!isTileUnlocked(x, y)) {
+    setText("builder-menu-message", "This area is still locked.");
+    return;
+  }
+
+  if (isTileOccupied(x, y)) {
+    setText("builder-menu-message", "That tile is already occupied.");
+    return;
+  }
+
+  const cost = itemData.buildCost || {};
+
+  if (!canAffordUpgrade(state, cost)) {
+    setText(
+      "builder-menu-message",
+      `Not enough resources. Need ${formatCost(cost)}.`,
+    );
+    return;
+  }
+
+  payUpgradeCost(state, cost);
+
+  state.village.placedItems.push(createPlacedItem(type, x, y));
 
   saveState(state);
-
-  movingPlacedItem = null;
-
+  renderState();
   renderVillage();
 
-  document.getElementById("builder-menu-message").textContent = "Item moved.";
+  setText("builder-menu-message", `${itemData.name} placed.`);
 }
 
-function isTileOccupiedForPlacedItemMove(x, y, movingItem) {
+function createPlacedItem(type, x, y) {
+  const item = {
+    type,
+    x,
+    y,
+    level: null,
+    placedAt: new Date().toISOString(),
+  };
+
+  if (type === "house") {
+    item.level = 1;
+  }
+
+  if (type === "farm") {
+    item.level = 1;
+    item.cropSlots = [];
+  }
+
+  return item;
+}
+
+function removePlacedItem(x, y) {
   const state = getState();
 
-  const hasPlacedItem = state.village.placedItems.some((item) => {
-    const isSameItem =
-      item.x === movingItem.x &&
-      item.y === movingItem.y &&
-      item.type === movingItem.type;
-
-    if (isSameItem) return false;
-
-    return item.x === x && item.y === y;
+  state.village.placedItems = state.village.placedItems.filter((item) => {
+    return !(item.x === x && item.y === y);
   });
 
-  if (hasPlacedItem) return true;
-
-  const hasBuilding = Object.keys(state.village.buildings).some((id) => {
-    const building = state.village.buildings[id];
-
-    const withinX = x >= building.x && x < building.x + building.width;
-    const withinY = y >= building.y && y < building.y + building.height;
-
-    return withinX && withinY;
-  });
-
-  return hasBuilding;
+  saveState(state);
+  renderVillage();
+  renderCropCapacityHud();
 }
-function handleTileClick(x, y) {
-  if (!buildMode) return;
 
-  if (builderAction === "move" && movingBuildingId) {
-    moveBuildingToTile(movingBuildingId, x, y);
-    return;
+/* ---------------------------------------
+   Build mode
+--------------------------------------- */
+
+function toggleBuildMode() {
+  buildMode = !buildMode;
+
+  const button = document.getElementById("toggle-build-mode-btn");
+  const builderMenu = document.getElementById("builder-menu");
+
+  if (buildMode) {
+    if (button) button.classList.add("active");
+    if (builderMenu) builderMenu.classList.remove("hidden");
+
+    renderBuildOptions();
+    setText("build-mode-message", "Build mode is on.");
+  } else {
+    if (button) button.classList.remove("active");
+    if (builderMenu) builderMenu.classList.add("hidden");
+
+    builderAction = null;
+    selectedBuildItem = null;
+    movingBuildingId = null;
+    movingPlacedItem = null;
+
+    hideElement("build-options");
+    setText("build-mode-message", "Build mode is off.");
   }
 
-  if (builderAction === "move" && movingPlacedItem) {
-    movePlacedItemToTile(x, y);
-    return;
+  renderVillage();
+}
+
+function setBuilderAction(action) {
+  builderAction = action;
+  selectedBuildItem = null;
+  movingBuildingId = null;
+  movingPlacedItem = null;
+
+  hideElement("build-options");
+
+  if (action === "build") {
+    showElement("build-options");
+    setText("builder-menu-message", "Choose something to build.");
   }
 
-  if (builderAction === "build" && selectedBuildItem) {
-    placeItemAtTile(selectedBuildItem, x, y);
-    return;
+  if (action === "move") {
+    setText("builder-menu-message", "Click an item or building to move it.");
+  }
+
+  if (action === "bulldoze") {
+    setText("builder-menu-message", "Click a placed item to remove it.");
   }
 }
+
 function renderBuildOptions() {
   const buttons = document.querySelectorAll(".build-option-btn");
 
@@ -630,63 +718,136 @@ function renderBuildOptions() {
     }
   });
 }
-function placeItemAtTile(type, x, y) {
-  if (!isBuildItemUnlocked(type)) {
-    document.getElementById("builder-menu-message").textContent =
-      `${PLACEABLE_ITEMS[type].name} is not unlocked yet.`;
-    return;
-  }
-  if (!isTileUnlocked(x, y)) {
-    document.getElementById("builder-menu-message").textContent =
-      "This area is still locked.";
-    return;
-  }
+
+function isBuildItemUnlocked(type) {
   const state = getState();
+  const level = state.player.level;
+
+  const unlockLevels = {
+    tree: 1,
+    garden: 1,
+    path: 1,
+    well: 1,
+    bench: 1,
+    house: 2,
+    farm: 3,
+    shrine: 7,
+  };
+
+  return level >= (unlockLevels[type] || 1);
+}
+
+function selectBuildItem(type) {
   const itemData = PLACEABLE_ITEMS[type];
 
   if (!itemData) return;
 
-  if (isTileOccupied(x, y)) {
-    document.getElementById("builder-menu-message").textContent =
-      "That tile is already occupied.";
+  if (!isBuildItemUnlocked(type)) {
+    const unlockLevels = {
+      house: 2,
+      farm: 3,
+      shrine: 7,
+    };
+
+    setText(
+      "builder-menu-message",
+      `${itemData.name} unlocks at Level ${unlockLevels[type] || 1}.`,
+    );
+
     return;
   }
 
-  const cost = itemData.buildCost || {};
+  selectedBuildItem = type;
 
-  if (!canAffordUpgrade(state, cost)) {
-    document.getElementById("builder-menu-message").textContent =
-      `Not enough resources. Need ${formatCost(cost)}.`;
+  setText(
+    "builder-menu-message",
+    `Selected: ${itemData.name}. Click an empty tile.`,
+  );
+}
+
+function handleTileClick(x, y) {
+  if (!buildMode) return;
+
+  if (builderAction === "move" && movingBuildingId) {
+    moveBuildingToTile(movingBuildingId, x, y);
     return;
   }
 
-  payUpgradeCost(state, cost);
+  if (builderAction === "move" && movingPlacedItem) {
+    movePlacedItemToTile(x, y);
+    return;
+  }
 
-  state.village.placedItems.push({
-    type,
-    x,
-    y,
-    level: type === "house" ? 1 : null,
-    placedAt: new Date().toISOString(),
+  if (builderAction === "build" && selectedBuildItem) {
+    placeItemAtTile(selectedBuildItem, x, y);
+  }
+}
+
+/* ---------------------------------------
+   Moving
+--------------------------------------- */
+
+function movePlacedItemStart(x, y) {
+  const state = getState();
+
+  const item = state.village.placedItems.find((placedItem) => {
+    return placedItem.x === x && placedItem.y === y;
   });
 
+  if (!item) return;
+
+  movingPlacedItem = {
+    originalX: item.x,
+    originalY: item.y,
+  };
+
+  setText(
+    "builder-menu-message",
+    `Moving ${PLACEABLE_ITEMS[item.type].name}. Click an empty tile.`,
+  );
+
+  renderVillage();
+}
+
+function movePlacedItemToTile(x, y) {
+  if (!movingPlacedItem) return;
+
+  const state = getState();
+
+  const item = state.village.placedItems.find((placedItem) => {
+    return (
+      placedItem.x === movingPlacedItem.originalX &&
+      placedItem.y === movingPlacedItem.originalY
+    );
+  });
+
+  if (!item) return;
+
+  if (isTileOccupiedForPlacedItemMove(x, y, item)) {
+    setText("builder-menu-message", "That tile is occupied.");
+    return;
+  }
+
+  item.x = x;
+  item.y = y;
+
   saveState(state);
-  renderState();
+
+  movingPlacedItem = null;
+
   renderVillage();
 
-  document.getElementById("builder-menu-message").textContent =
-    `${itemData.name} placed.`;
+  setText("builder-menu-message", "Item moved.");
 }
+
 function moveBuildingToTile(buildingId, x, y) {
   const state = getState();
-  const building = state.village.buildings[buildingId];
+  const building = getSavedBuildingState(state, buildingId);
 
   if (!building) return;
 
   if (!canPlaceBuilding(buildingId, x, y)) {
-    document.getElementById("build-menu-message").textContent =
-      "That building cannot be placed there.";
-
+    setText("builder-menu-message", "That building cannot be placed there.");
     return;
   }
 
@@ -697,14 +858,14 @@ function moveBuildingToTile(buildingId, x, y) {
 
   movingBuildingId = null;
 
-  document.getElementById("build-menu-message").textContent = "Building moved.";
-
   renderVillage();
+
+  setText("builder-menu-message", "Building moved.");
 }
 
 function canPlaceBuilding(buildingId, x, y) {
   const state = getState();
-  const building = state.village.buildings[buildingId];
+  const building = getSavedBuildingState(state, buildingId);
 
   if (!building) return false;
 
@@ -730,28 +891,10 @@ function canPlaceBuilding(buildingId, x, y) {
   return true;
 }
 
-function isTileOccupiedForMove(x, y, movingId) {
-  const state = getState();
+/* ---------------------------------------
+   Tile occupancy
+--------------------------------------- */
 
-  const hasPlacedItem = state.village.placedItems.some((item) => {
-    return item.x === x && item.y === y;
-  });
-
-  if (hasPlacedItem) return true;
-
-  const hasOtherBuilding = Object.keys(state.village.buildings).some((id) => {
-    if (id === movingId) return false;
-
-    const building = state.village.buildings[id];
-
-    const withinX = x >= building.x && x < building.x + building.width;
-    const withinY = y >= building.y && y < building.y + building.height;
-
-    return withinX && withinY;
-  });
-
-  return hasOtherBuilding;
-}
 function isTileOccupied(x, y) {
   const state = getState();
 
@@ -761,404 +904,265 @@ function isTileOccupied(x, y) {
 
   if (hasPlacedItem) return true;
 
-  const hasBuilding = Object.keys(state.village.buildings).some((id) => {
+  return hasBuildingOnTile(state, x, y);
+}
+
+function isTileOccupiedForMove(x, y, movingBuildingIdToIgnore) {
+  const state = getState();
+
+  const hasPlacedItem = state.village.placedItems.some((item) => {
+    return item.x === x && item.y === y;
+  });
+
+  if (hasPlacedItem) return true;
+
+  return Object.keys(state.village.buildings).some((id) => {
+    if (id === movingBuildingIdToIgnore) return false;
+
     const building = state.village.buildings[id];
 
-    const withinX = x >= building.x && x < building.x + building.width;
-    const withinY = y >= building.y && y < building.y + building.height;
-
-    return withinX && withinY;
+    return isPointInsideBuilding(x, y, building);
   });
-
-  return hasBuilding;
 }
 
-function placeItem(type) {
-  if (!selectedTile) return;
-
+function isTileOccupiedForPlacedItemMove(x, y, movingItem) {
   const state = getState();
 
-  const itemData = PLACEABLE_ITEMS[type];
+  const hasPlacedItem = state.village.placedItems.some((item) => {
+    const isSameItem =
+      item.x === movingItem.x &&
+      item.y === movingItem.y &&
+      item.type === movingItem.type;
 
-  if (!itemData) return;
+    if (isSameItem) return false;
 
-  if (isTileOccupied(selectedTile.x, selectedTile.y)) {
-    document.getElementById("build-modal-message").textContent =
-      "That tile is already occupied.";
-
-    return;
-  }
-
-  const cost = itemData.buildCost || {};
-
-  if (!canAffordUpgrade(state, cost)) {
-    document.getElementById("build-modal-message").textContent =
-      `Not enough resources. Need ${formatCost(cost)}.`;
-
-    return;
-  }
-
-  payUpgradeCost(state, cost);
-
-  state.village.placedItems.push({
-    type,
-    x: selectedTile.x,
-    y: selectedTile.y,
-    level: type === "house" ? 1 : null,
-    placedAt: new Date().toISOString(),
+    return item.x === x && item.y === y;
   });
 
-  saveState(state);
+  if (hasPlacedItem) return true;
 
-  selectedTile = null;
-
-  document.getElementById("build-modal").classList.add("hidden");
-
-  renderState();
-  renderVillage();
-}
-function calculatePopulationCap(state) {
-  const basePopulationCap = 5;
-
-  const housePopulationCap = state.village.placedItems
-    .filter((item) => item.type === "house")
-    .reduce((total, house) => {
-      return total + (house.level || 1);
-    }, 0);
-
-  return basePopulationCap + housePopulationCap;
+  return hasBuildingOnTile(state, x, y);
 }
 
-function renderPopulationCap() {
-  const state = getState();
-  const populationCapElement = document.getElementById("population-cap");
-
-  if (!populationCapElement) return;
-
-  populationCapElement.textContent = calculatePopulationCap(state);
-}
-function removePlacedItem(x, y) {
-  const state = getState();
-
-  state.village.placedItems = state.village.placedItems.filter((item) => {
-    return !(item.x === x && item.y === y);
+function hasBuildingOnTile(state, x, y) {
+  return Object.keys(state.village.buildings).some((id) => {
+    const building = state.village.buildings[id];
+    return isPointInsideBuilding(x, y, building);
   });
-
-  saveState(state);
-  renderVillage();
 }
 
-function toggleBuildMode() {
-  buildMode = !buildMode;
+function isPointInsideBuilding(x, y, building) {
+  if (!building) return false;
 
-  const button = document.getElementById("toggle-build-mode-btn");
-  const message = document.getElementById("build-mode-message");
-  const builderMenu = document.getElementById("builder-menu");
+  const withinX = x >= building.x && x < building.x + building.width;
+  const withinY = y >= building.y && y < building.y + building.height;
 
-  if (buildMode) {
-    button.classList.add("active");
-    builderMenu.classList.remove("hidden");
-    renderBuildOptions();
-    message.textContent = "Build mode is on.";
-  } else {
-    button.classList.remove("active");
-    builderMenu.classList.add("hidden");
-    message.textContent = "Build mode is off.";
-
-    builderAction = null;
-    selectedBuildItem = null;
-    movingBuildingId = null;
-
-    document.getElementById("build-options").classList.add("hidden");
-  }
-
-  renderVillage();
+  return withinX && withinY;
 }
-function setBuilderAction(action) {
-  builderAction = action;
-  selectedBuildItem = null;
-  movingBuildingId = null;
-  movingPlacedItem = null;
 
-  document.getElementById("build-options").classList.add("hidden");
+/* ---------------------------------------
+   Farm system
+--------------------------------------- */
 
-  if (action === "build") {
-    document.getElementById("build-options").classList.remove("hidden");
-    document.getElementById("builder-menu-message").textContent =
-      "Choose something to build.";
-  }
-
-  if (action === "move") {
-    document.getElementById("builder-menu-message").textContent =
-      "Click an item or building to move it.";
-  }
-
-  if (action === "bulldoze") {
-    document.getElementById("builder-menu-message").textContent =
-      "Click a placed item to remove it.";
-  }
-}
-function isBuildItemUnlocked(type) {
+function getUnlockedCrops() {
   const state = getState();
   const level = state.player.level;
 
-  const unlockLevels = {
-    tree: 1,
-    garden: 1,
-    path: 1,
-    well: 1,
-    bench: 1,
-
-    house: 2,
-    farm: 3,
-    shrine: 7,
-  };
-
-  return level >= (unlockLevels[type] || 1);
+  return Object.entries(CROP_DATA)
+    .filter(([, crop]) => level >= crop.unlockLevel)
+    .map(([cropId]) => cropId);
 }
-function selectBuildItem(type) {
-  if (!isBuildItemUnlocked(type)) {
-    const unlockLevels = {
-      house: 2,
-      farm: 3,
-      shrine: 7,
-    };
 
-    document.getElementById("builder-menu-message").textContent =
-      `${PLACEABLE_ITEMS[type].name} unlocks at Level ${unlockLevels[type]}.`;
-
-    return;
-  }
-
-  selectedBuildItem = type;
-
-  document.getElementById("builder-menu-message").textContent =
-    `Selected: ${PLACEABLE_ITEMS[type].name}. Click an empty tile.`;
-}
-function clearPlacedItems() {
+function getFarmCropCapacity() {
   const state = getState();
+  const cropCapacity = {};
 
-  state.village.placedItems = [];
+  state.village.placedItems
+    .filter((item) => item.type === "farm")
+    .forEach((farm) => {
+      if (!farm.level) farm.level = 1;
+      if (!farm.cropSlots) farm.cropSlots = [];
 
-  saveState(state);
-  renderVillage();
-  renderTownName();
-}
-function renderTownName() {
-  const state = getState();
+      for (let i = 0; i < farm.level; i++) {
+        const cropId = farm.cropSlots[i];
 
-  const townNameDisplay = document.getElementById("town-name-display");
-  const townNameInput = document.getElementById("town-name-input");
+        if (!cropId) continue;
 
-  if (townNameDisplay) {
-    townNameDisplay.textContent = state.townName || "Language Town";
-  }
+        if (!cropCapacity[cropId]) {
+          cropCapacity[cropId] = {
+            available: 0,
+            total: 0,
+          };
+        }
 
-  if (townNameInput) {
-    townNameInput.value = state.townName || "Language Town";
-  }
-}
-
-function saveTownName() {
-  const state = getState();
-  const input = document.getElementById("town-name-input");
-  const newName = input.value.trim();
-
-  if (!newName) return;
-
-  state.townName = newName;
-  saveState(state);
-
-  renderTownName();
-
-  document.getElementById("town-name-modal").classList.add("hidden");
-}
-function openTownNameModal() {
-  const state = getState();
-
-  document.getElementById("town-name-input").value =
-    state.townName || "Language Town";
-
-  document.getElementById("town-name-modal").classList.remove("hidden");
-}
-
-function closeTownNameModal() {
-  document.getElementById("town-name-modal").classList.add("hidden");
-}
-function openBuildingModal(buildingId) {
-  const state = getState();
-  const building = BUILDING_DATA[buildingId];
-
-  selectedBuildingId = buildingId;
-
-  if (!state.village.buildings[buildingId]) {
-    state.village.buildings[buildingId] = {
-      name: building.name,
-      level: 1,
-    };
-
-    saveState(state);
-  }
-
-  const savedBuilding = state.village.buildings[buildingId];
-
-  document.getElementById("modal-building-name").textContent = building.name;
-  document.getElementById("modal-owner").textContent =
-    `Manager: ${building.owner}`;
-  document.getElementById("modal-dialogue").textContent = building.dialogue;
-  document.getElementById("modal-building-level").textContent =
-    savedBuilding.level;
-
-  document.getElementById("modal-upgrade-cost").textContent =
-    `Upgrade Cost: ${formatCost(building.upgradeCost)}`;
-
-  document.getElementById("modal-message").textContent = "";
-
-  document.getElementById("building-modal").classList.remove("hidden");
-  const marketActions = document.getElementById("market-actions");
-  const schoolActions = document.getElementById("school-actions");
-  const tonePracticeLink = document.getElementById("tone-practice-link");
-  const tonePracticeLockedMessage = document.getElementById(
-    "tone-practice-locked-message",
-  );
-
-  if (schoolActions) {
-    if (buildingId === "school") {
-      schoolActions.classList.remove("hidden");
-
-      const schoolLevel = savedBuilding.level || 1;
-
-      if (schoolLevel >= 2) {
-        tonePracticeLink.classList.remove("hidden");
-        tonePracticeLockedMessage.classList.add("hidden");
-      } else {
-        tonePracticeLink.classList.add("hidden");
-        tonePracticeLockedMessage.classList.remove("hidden");
+        cropCapacity[cropId].available += 1;
+        cropCapacity[cropId].total += 1;
       }
-    } else {
-      schoolActions.classList.add("hidden");
+    });
+
+  return cropCapacity;
+}
+
+function renderCropCapacityHud() {
+  const cropCapacity = getFarmCropCapacity();
+
+  Object.keys(CROP_DATA).forEach((cropId) => {
+    const element = document.getElementById(cropId);
+
+    if (!element) return;
+
+    const capacity = cropCapacity[cropId];
+
+    if (!capacity) {
+      element.textContent = "0 / 0";
+      return;
     }
-  }
-  if (marketActions) {
-    if (buildingId === "market") {
-      marketActions.classList.remove("hidden");
-    } else {
-      marketActions.classList.add("hidden");
-    }
-  }
-}
 
-function closeBuildingModal() {
-  document.getElementById("building-modal").classList.add("hidden");
-}
-
-function closeBuildModal() {
-  selectedTile = null;
-  document.getElementById("build-modal").classList.add("hidden");
-}
-
-function formatCost(cost) {
-  return Object.entries(cost)
-    .map(([resource, amount]) => `${amount} ${resource}`)
-    .join(", ");
-}
-
-function canAffordUpgrade(state, cost) {
-  return Object.entries(cost).every(([resource, amount]) => {
-    return state.resources[resource] >= amount;
+    element.textContent = `${capacity.available} / ${capacity.total}`;
   });
 }
 
-function payUpgradeCost(state, cost) {
-  Object.entries(cost).forEach(([resource, amount]) => {
-    state.resources[resource] -= amount;
-  });
-}
-
-function upgradeSelectedBuilding() {
-  if (!selectedBuildingId) return;
-
+function openFarmModal(x, y) {
   const state = getState();
-  const building = BUILDING_DATA[selectedBuildingId];
-  const savedBuilding = state.village.buildings[selectedBuildingId];
 
-  const modalMessage = document.getElementById("modal-message");
+  const farm = state.village.placedItems.find((item) => {
+    return item.type === "farm" && item.x === x && item.y === y;
+  });
 
-  if (!canAffordUpgrade(state, building.upgradeCost)) {
-    modalMessage.textContent = "Not enough resources yet.";
+  if (!farm) return;
+
+  if (!farm.level) farm.level = 1;
+  if (!farm.cropSlots) farm.cropSlots = [];
+
+  selectedFarm = { x, y };
+
+  setText("farm-level", farm.level);
+  setText("farm-slots", farm.level);
+
+  renderFarmCropSlots(farm);
+  renderFarmCropCapacitySummary();
+
+  setText("farm-message", "");
+  showElement("farm-modal");
+
+  saveState(state);
+}
+
+function renderFarmCropSlots(farm) {
+  const container = document.getElementById("farm-crop-slots");
+
+  if (!container) return;
+
+  const unlockedCrops = getUnlockedCrops();
+
+  container.innerHTML = "";
+
+  for (let i = 0; i < farm.level; i++) {
+    const currentCrop = farm.cropSlots[i] || "";
+
+    const row = document.createElement("div");
+    row.classList.add("farm-slot-row");
+
+    row.innerHTML = `
+      <label>
+        Slot ${i + 1}
+        <select data-slot-index="${i}">
+          <option value="">Empty</option>
+          ${unlockedCrops
+            .map((cropId) => {
+              const crop = CROP_DATA[cropId];
+
+              return `
+                <option value="${cropId}" ${currentCrop === cropId ? "selected" : ""}>
+                  ${crop.icon} ${crop.name}
+                </option>
+              `;
+            })
+            .join("")}
+        </select>
+      </label>
+    `;
+
+    container.appendChild(row);
+  }
+
+  container.querySelectorAll("select").forEach((select) => {
+    select.addEventListener("change", updateFarmCropSlot);
+  });
+}
+
+function renderFarmCropCapacitySummary() {
+  const container = document.getElementById("farm-capacity-summary");
+
+  if (!container) return;
+
+  const cropCapacity = getFarmCropCapacity();
+  const entries = Object.entries(cropCapacity);
+
+  if (entries.length === 0) {
+    container.innerHTML = `
+      <p class="farm-capacity-empty">No crops assigned yet.</p>
+    `;
     return;
   }
 
-  payUpgradeCost(state, building.upgradeCost);
+  container.innerHTML = entries
+    .map(([cropId, capacity]) => {
+      const crop = CROP_DATA[cropId];
 
-  savedBuilding.level += 1;
+      if (!crop) return "";
+
+      return `
+        <div class="farm-capacity-row">
+          <span>${crop.icon} ${crop.name}</span>
+          <strong>${capacity.available} / ${capacity.total}</strong>
+        </div>
+      `;
+    })
+    .join("");
+}
+
+function updateFarmCropSlot(event) {
+  if (!selectedFarm) return;
+
+  const state = getState();
+
+  const farm = state.village.placedItems.find((item) => {
+    return (
+      item.type === "farm" &&
+      item.x === selectedFarm.x &&
+      item.y === selectedFarm.y
+    );
+  });
+
+  if (!farm) return;
+
+  if (!farm.cropSlots) farm.cropSlots = [];
+
+  const slotIndex = Number(event.target.dataset.slotIndex);
+  const cropId = event.target.value;
+
+  farm.cropSlots[slotIndex] = cropId;
 
   saveState(state);
+
+  renderFarmCropSlots(farm);
+  renderFarmCropCapacitySummary();
+  renderCropCapacityHud();
   renderState();
 
-  openBuildingModal(selectedBuildingId);
-
-  document.getElementById("modal-message").textContent =
-    `${building.name} upgraded to Level ${savedBuilding.level}!`;
+  setText("farm-message", "Crop selection saved.");
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  renderTownName();
-  renderVillage();
-  document
-    .getElementById("builder-build-btn")
-    .addEventListener("click", () => setBuilderAction("build"));
+function closeFarmModal() {
+  selectedFarm = null;
+  hideElement("farm-modal");
+}
 
-  document
-    .getElementById("builder-move-btn")
-    .addEventListener("click", () => setBuilderAction("move"));
+/* ---------------------------------------
+   House system
+--------------------------------------- */
 
-  document
-    .getElementById("builder-bulldoze-btn")
-    .addEventListener("click", () => setBuilderAction("bulldoze"));
-  document
-    .getElementById("close-modal")
-    .addEventListener("click", closeBuildingModal);
-  document
-    .getElementById("close-build-modal")
-    .addEventListener("click", closeBuildModal);
-  document
-    .getElementById("buy-wood-btn")
-    .addEventListener("click", buyWoodFromMarket);
-  document
-    .getElementById("upgrade-building-btn")
-    .addEventListener("click", upgradeSelectedBuilding);
-
-  document
-    .getElementById("toggle-build-mode-btn")
-    .addEventListener("click", toggleBuildMode);
-
-  document
-    .getElementById("close-house-modal")
-    .addEventListener("click", closeHouseModal);
-
-  document
-    .getElementById("upgrade-house-btn")
-    .addEventListener("click", upgradeHouse);
-  document
-    .getElementById("edit-town-name-btn")
-    .addEventListener("click", openTownNameModal);
-
-  document
-    .getElementById("close-town-name-modal")
-    .addEventListener("click", closeTownNameModal);
-
-  document
-    .getElementById("save-town-name-btn")
-    .addEventListener("click", saveTownName);
-  document
-    .getElementById("close-farm-modal")
-    .addEventListener("click", closeFarmModal);
-
-  document
-    .getElementById("collect-crops-btn")
-    .addEventListener("click", collectCrops);
-});
 function openHouseModal(x, y) {
   const state = getState();
 
@@ -1168,43 +1172,39 @@ function openHouseModal(x, y) {
 
   if (!house) return;
 
-  if (!house.level) {
-    house.level = 1;
-  }
+  if (!house.level) house.level = 1;
 
-  selectedHouse = {
-    x,
-    y,
-  };
+  selectedHouse = { x, y };
 
-  document.getElementById("house-level").textContent = house.level;
-
-  document.getElementById("house-population").textContent = house.level;
+  setText("house-level", house.level);
+  setText("house-population", house.level);
 
   const cost = getHouseUpgradeCost(house.level);
+  const upgradeButton = document.getElementById("upgrade-house-btn");
 
   if (cost) {
-    document.getElementById("house-upgrade-cost").textContent =
-      `Upgrade Cost: ${formatCost(cost)}`;
+    setText("house-upgrade-cost", `Upgrade Cost: ${formatCost(cost)}`);
 
-    document.getElementById("upgrade-house-btn").style.display = "block";
+    if (upgradeButton) {
+      upgradeButton.style.display = "block";
+    }
   } else {
-    document.getElementById("house-upgrade-cost").textContent =
-      "Maximum level reached";
+    setText("house-upgrade-cost", "Maximum level reached");
 
-    document.getElementById("upgrade-house-btn").style.display = "none";
+    if (upgradeButton) {
+      upgradeButton.style.display = "none";
+    }
   }
 
-  document.getElementById("house-message").textContent = "";
-
-  document.getElementById("house-modal").classList.remove("hidden");
+  setText("house-message", "");
+  showElement("house-modal");
 }
 
 function closeHouseModal() {
   selectedHouse = null;
-
-  document.getElementById("house-modal").classList.add("hidden");
+  hideElement("house-modal");
 }
+
 function upgradeHouse() {
   if (!selectedHouse) return;
 
@@ -1220,18 +1220,17 @@ function upgradeHouse() {
 
   if (!house) return;
 
-  if (!house.level) {
-    house.level = 1;
-  }
+  if (!house.level) house.level = 1;
 
   const upgradeCost = getHouseUpgradeCost(house.level);
 
   if (!upgradeCost) return;
 
   if (!canAffordUpgrade(state, upgradeCost)) {
-    document.getElementById("house-message").textContent =
-      `Not enough resources. Need ${formatCost(upgradeCost)}.`;
-
+    setText(
+      "house-message",
+      `Not enough resources. Need ${formatCost(upgradeCost)}.`,
+    );
     return;
   }
 
@@ -1240,12 +1239,12 @@ function upgradeHouse() {
   house.level += 1;
 
   saveState(state);
-
   renderState();
   renderVillage();
 
   openHouseModal(house.x, house.y);
 }
+
 function getHouseUpgradeCost(houseLevel) {
   if (houseLevel === 1) {
     return { coins: 25, wood: 5 };
@@ -1257,37 +1256,51 @@ function getHouseUpgradeCost(houseLevel) {
 
   return null;
 }
+
+/* ---------------------------------------
+   Population
+--------------------------------------- */
+
+function calculatePopulationCap(state) {
+  const basePopulationCap = 5;
+
+  const housePopulationCap = state.village.placedItems
+    .filter((item) => item.type === "house")
+    .reduce((total, house) => {
+      return total + (house.level || 1);
+    }, 0);
+
+  return basePopulationCap + housePopulationCap;
+}
+
+function renderPopulation() {
+  const state = getState();
+  const populationCap = calculatePopulationCap(state);
+  const population = state.village.population;
+
+  setText("current-population", population.current);
+  setText("population-cap", populationCap);
+  setText(
+    "next-citizen-progress",
+    `${population.learnedWordsSinceLastCitizen} / ${population.nextCitizenRequirement}`,
+  );
+}
+
+function renderPopulationCap() {
+  const state = getState();
+  setText("population-cap", calculatePopulationCap(state));
+}
+
 function getNextCitizenRequirement(currentPopulation) {
   if (currentPopulation === 0) return 25;
   if (currentPopulation === 1) return 50;
   return 100;
 }
 
-function renderPopulation() {
-  const state = getState();
+/* ---------------------------------------
+   Market
+--------------------------------------- */
 
-  const currentPopulationElement =
-    document.getElementById("current-population");
-  const populationCapElement = document.getElementById("population-cap");
-  const nextCitizenProgressElement = document.getElementById(
-    "next-citizen-progress",
-  );
-
-  const populationCap = calculatePopulationCap(state);
-  const population = state.village.population;
-
-  if (currentPopulationElement) {
-    currentPopulationElement.textContent = population.current;
-  }
-
-  if (populationCapElement) {
-    populationCapElement.textContent = populationCap;
-  }
-
-  if (nextCitizenProgressElement) {
-    nextCitizenProgressElement.textContent = `${population.learnedWordsSinceLastCitizen} / ${population.nextCitizenRequirement}`;
-  }
-}
 function buyWoodFromMarket() {
   const state = getState();
 
@@ -1296,7 +1309,7 @@ function buyWoodFromMarket() {
   };
 
   if (!canAffordUpgrade(state, cost)) {
-    document.getElementById("modal-message").textContent = "Not enough coins.";
+    setText("modal-message", "Not enough coins.");
     return;
   }
 
@@ -1307,6 +1320,182 @@ function buyWoodFromMarket() {
   saveState(state);
   renderState();
 
-  document.getElementById("modal-message").textContent =
-    "Bought 10 wood for 25 coins.";
+  setText("modal-message", "Bought 10 wood for 25 coins.");
 }
+
+/* ---------------------------------------
+   Town name
+--------------------------------------- */
+
+function renderTownName() {
+  const state = getState();
+
+  const townNameDisplay = document.getElementById("town-name-display");
+  const townNameInput = document.getElementById("town-name-input");
+
+  if (townNameDisplay) {
+    townNameDisplay.textContent = state.townName || "Language Town";
+  }
+
+  if (townNameInput) {
+    townNameInput.value = state.townName || "Language Town";
+  }
+}
+
+function openTownNameModal() {
+  const state = getState();
+
+  const input = document.getElementById("town-name-input");
+
+  if (input) {
+    input.value = state.townName || "Language Town";
+  }
+
+  showElement("town-name-modal");
+}
+
+function closeTownNameModal() {
+  hideElement("town-name-modal");
+}
+
+function saveTownName() {
+  const state = getState();
+  const input = document.getElementById("town-name-input");
+
+  if (!input) return;
+
+  const newName = input.value.trim();
+
+  if (!newName) return;
+
+  state.townName = newName;
+  saveState(state);
+
+  renderTownName();
+  closeTownNameModal();
+}
+
+/* ---------------------------------------
+   Legacy build modal support
+--------------------------------------- */
+
+function placeItem(type) {
+  if (!selectedTile) return;
+
+  const state = getState();
+  const itemData = PLACEABLE_ITEMS[type];
+
+  if (!itemData) return;
+
+  if (isTileOccupied(selectedTile.x, selectedTile.y)) {
+    setText("build-modal-message", "That tile is already occupied.");
+    return;
+  }
+
+  const cost = itemData.buildCost || {};
+
+  if (!canAffordUpgrade(state, cost)) {
+    setText(
+      "build-modal-message",
+      `Not enough resources. Need ${formatCost(cost)}.`,
+    );
+    return;
+  }
+
+  payUpgradeCost(state, cost);
+
+  state.village.placedItems.push(
+    createPlacedItem(type, selectedTile.x, selectedTile.y),
+  );
+
+  saveState(state);
+
+  selectedTile = null;
+
+  hideElement("build-modal");
+
+  renderState();
+  renderVillage();
+}
+
+function closeBuildModal() {
+  selectedTile = null;
+  hideElement("build-modal");
+}
+
+/* ---------------------------------------
+   Shared resource helpers
+--------------------------------------- */
+
+function formatCost(cost) {
+  const entries = Object.entries(cost || {});
+
+  if (entries.length === 0) return "Free";
+
+  return entries
+    .map(([resource, amount]) => `${amount} ${resource}`)
+    .join(", ");
+}
+
+function canAffordUpgrade(state, cost) {
+  return Object.entries(cost || {}).every(([resource, amount]) => {
+    return (state.resources[resource] || 0) >= amount;
+  });
+}
+
+function payUpgradeCost(state, cost) {
+  Object.entries(cost || {}).forEach(([resource, amount]) => {
+    state.resources[resource] = (state.resources[resource] || 0) - amount;
+  });
+}
+
+/* ---------------------------------------
+   Dev / reset helper
+--------------------------------------- */
+
+function clearPlacedItems() {
+  const state = getState();
+
+  state.village.placedItems = [];
+
+  saveState(state);
+  renderVillage();
+  renderTownName();
+}
+
+/* ---------------------------------------
+   Page init
+--------------------------------------- */
+
+document.addEventListener("DOMContentLoaded", () => {
+  renderTownName();
+  renderVillage();
+
+  addClickListener("builder-build-btn", () => setBuilderAction("build"));
+  addClickListener("builder-move-btn", () => setBuilderAction("move"));
+  addClickListener("builder-bulldoze-btn", () => setBuilderAction("bulldoze"));
+
+  addClickListener("toggle-build-mode-btn", toggleBuildMode);
+
+  addClickListener("close-modal", closeBuildingModal);
+  addClickListener("upgrade-building-btn", upgradeSelectedBuilding);
+
+  addClickListener("buy-wood-btn", buyWoodFromMarket);
+
+  addClickListener("close-build-modal", closeBuildModal);
+
+  addClickListener("close-house-modal", closeHouseModal);
+  addClickListener("upgrade-house-btn", upgradeHouse);
+
+  addClickListener("close-farm-modal", closeFarmModal);
+
+  addClickListener("edit-town-name-btn", openTownNameModal);
+  addClickListener("close-town-name-modal", closeTownNameModal);
+  addClickListener("save-town-name-btn", saveTownName);
+
+  const oldCollectCropsBtn = document.getElementById("collect-crops-btn");
+
+  if (oldCollectCropsBtn) {
+    oldCollectCropsBtn.remove();
+  }
+});

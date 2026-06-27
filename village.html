@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <title>Village | Language Village</title>
+    <title>Village | Language Town</title>
 
     <link rel="stylesheet" href="css/styles.css" />
   </head>
@@ -12,7 +12,7 @@
   <body>
     <header class="top-bar">
       <div>
-        <h1>Your Village</h1>
+        <h1>Your Town</h1>
         <p>Spend learning rewards to upgrade your town.</p>
       </div>
 
@@ -20,37 +20,45 @@
         <a href="index.html">Home</a>
         <a href="vocab.html">Vocabulary</a>
         <a href="study.html">Study</a>
-        <a href="village.html">Village</a>
         <a href="quiz.html">Quiz</a>
+        <a href="village.html">Village</a>
         <a href="villagers.html">Villagers</a>
+              <a href="testing.html">Testing</a>
       </nav>
     </header>
 
     <main class="page">
+      <!-- Town HUD -->
       <section class="card village-hud">
         <section class="town-title">
           <h2 id="town-name-display">Language Town</h2>
-
           <button id="edit-town-name-btn" class="edit-town-button">✏️</button>
         </section>
+
         <strong>🪙 Coins: <span id="coins">0</span></strong>
         <strong>📚 Knowledge: <span id="knowledge">0</span></strong>
         <strong>🪵 Wood: <span id="wood">0</span></strong>
         <strong>🎭 Culture: <span id="culture">0</span></strong>
-        <strong
-          >👥 Population: <span id="current-population">0</span> /
-          <span id="population-cap">0</span></strong
-        >
-        <strong
-          >📈 Next Citizen: <span id="next-citizen-progress">0</span></strong
-        >
-        <strong>🍚 Rice: <span id="rice">0</span></strong>
-        <strong>🌾 Wheat: <span id="wheat">0</span></strong>
-        <strong>🫘 Soybean: <span id="soybean">0</span></strong>
-        <strong>🧅 Green Onion: <span id="greenOnion">0</span></strong>
-        <strong>🍵 Tea: <span id="tea">0</span></strong>
+
+        <strong>
+          👥 Population:
+          <span id="current-population">0</span> /
+          <span id="population-cap">0</span>
+        </strong>
+
+        <strong>
+          📈 Next Citizen:
+          <span id="next-citizen-progress">0</span>
+        </strong>
+
+        <strong>🍚 Rice: <span id="rice">0 / 0</span></strong>
+        <strong>🌾 Wheat: <span id="wheat">0 / 0</span></strong>
+        <strong>🫘 Soybean: <span id="soybean">0 / 0</span></strong>
+        <strong>🧅 Green Onion: <span id="greenOnion">0 / 0</span></strong>
+        <strong>🍵 Tea: <span id="tea">0 / 0</span></strong>
       </section>
 
+      <!-- Town Layout -->
       <div class="village-layout">
         <div class="map-wrapper">
           <button id="toggle-build-mode-btn" class="hammer-button">🔨</button>
@@ -60,9 +68,11 @@
         <aside id="builder-menu" class="builder-menu hidden">
           <h3>Builder Menu</h3>
 
-          <button id="builder-build-btn">Build</button>
-          <button id="builder-move-btn">Move</button>
-          <button id="builder-bulldoze-btn">Bulldoze</button>
+          <div class="button-row">
+            <button id="builder-build-btn">Build</button>
+            <button id="builder-move-btn">Move</button>
+            <button id="builder-bulldoze-btn">Bulldoze</button>
+          </div>
 
           <div id="build-options" class="build-options hidden">
             <h4>Build New</h4>
@@ -74,6 +84,7 @@
             >
               🌳 Tree
             </button>
+
             <button
               class="build-option-btn"
               data-build-type="house"
@@ -81,6 +92,7 @@
             >
               🏠 House
             </button>
+
             <button
               class="build-option-btn"
               data-build-type="garden"
@@ -88,6 +100,7 @@
             >
               🌷 Garden
             </button>
+
             <button
               class="build-option-btn"
               data-build-type="path"
@@ -95,6 +108,7 @@
             >
               🟫 Path
             </button>
+
             <button
               class="build-option-btn"
               data-build-type="farm"
@@ -102,6 +116,7 @@
             >
               🌾 Farm
             </button>
+
             <button
               class="build-option-btn"
               data-build-type="well"
@@ -109,6 +124,7 @@
             >
               🪣 Well
             </button>
+
             <button
               class="build-option-btn"
               data-build-type="bench"
@@ -116,6 +132,7 @@
             >
               🪑 Bench
             </button>
+
             <button
               class="build-option-btn"
               data-build-type="shrine"
@@ -132,12 +149,9 @@
       <p id="build-mode-message" class="build-mode-message">
         Build mode is off.
       </p>
-
-      <p id="build-mode-message" class="build-mode-message">
-        Build mode is off.
-      </p>
     </main>
 
+    <!-- Building Modal -->
     <div class="modal hidden" id="building-modal">
       <div class="modal-content">
         <button class="close-button" id="close-modal">X</button>
@@ -150,6 +164,8 @@
 
         <p>Level: <strong id="modal-building-level"></strong></p>
         <p id="modal-upgrade-cost"></p>
+
+        <!-- School Actions -->
         <div id="school-actions" class="hidden">
           <hr />
 
@@ -168,18 +184,33 @@
           <p id="tone-practice-locked-message">
             🔒 Tone Practice unlocks when School reaches Level 2.
           </p>
+
+          <div class="locked-activity-list">
+            <p>🔒 Listening Practice — Coming later</p>
+            <p>🔒 Writing Practice — Coming later</p>
+            <p>🔒 Grammar Practice — Coming later</p>
+          </div>
         </div>
-        <button id="upgrade-building-btn">Upgrade Building</button>
+
+        <!-- Market Actions -->
         <div id="market-actions" class="hidden">
           <hr />
+
           <h3>Market Trade</h3>
           <p>Trade coins for wood.</p>
 
           <button id="buy-wood-btn">Buy 10 Wood for 25 Coins</button>
         </div>
+
+        <hr />
+
+        <button id="upgrade-building-btn">Upgrade Building</button>
+
         <p id="modal-message"></p>
       </div>
     </div>
+
+    <!-- Rename Town Modal -->
     <div class="modal hidden" id="town-name-modal">
       <div class="modal-content">
         <button class="close-button" id="close-town-name-modal">X</button>
@@ -191,6 +222,8 @@
         <button id="save-town-name-btn">Save</button>
       </div>
     </div>
+
+    <!-- Legacy Build Modal -->
     <div class="modal hidden" id="build-modal">
       <div class="modal-content">
         <button class="close-button" id="close-build-modal">X</button>
@@ -212,17 +245,15 @@
         <p id="build-modal-message"></p>
       </div>
     </div>
+
+    <!-- House Modal -->
     <div class="modal hidden" id="house-modal">
       <div class="modal-content">
         <button class="close-button" id="close-house-modal">X</button>
 
         <h2>House</h2>
 
-        <p>
-          Level:
-          <strong id="house-level"></strong>
-        </p>
-
+        <p>Level: <strong id="house-level"></strong></p>
         <p>Population Bonus: +<strong id="house-population"></strong></p>
 
         <p id="house-upgrade-cost"></p>
@@ -232,6 +263,8 @@
         <p id="house-message"></p>
       </div>
     </div>
+
+    <!-- Farm Modal -->
     <div class="modal hidden" id="farm-modal">
       <div class="modal-content">
         <button class="close-button" id="close-farm-modal">X</button>
@@ -243,11 +276,18 @@
 
         <div id="farm-crop-slots"></div>
 
-        <button id="collect-crops-btn">Collect Crops</button>
+        <div class="farm-capacity-box">
+          <h3>Crop Capacity</h3>
+          <p class="helper-text">
+            Crops are production capacity, not collectable inventory.
+          </p>
+          <div id="farm-capacity-summary"></div>
+        </div>
 
         <p id="farm-message"></p>
       </div>
     </div>
+
     <script src="js/state.js"></script>
     <script src="js/village.js"></script>
   </body>

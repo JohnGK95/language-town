@@ -1,6 +1,9 @@
 // ===============================
-// LANGUAGE VILLAGE - GAME STATE
+// LANGUAGE TOWN - GAME STATE
 // ===============================
+
+const STORAGE_KEY = "languageTownState";
+const LEGACY_STORAGE_KEY = "languageVillageState";
 
 const DEFAULT_STATE = {
   townName: "Language Town",
@@ -239,7 +242,9 @@ function savePlayerName() {
 }
 // Load saved state or create new state
 function loadState() {
-  const savedState = localStorage.getItem("languageVillageState");
+  const savedState =
+    localStorage.getItem(STORAGE_KEY) ||
+    localStorage.getItem(LEGACY_STORAGE_KEY);
 
   if (savedState) {
     const state = JSON.parse(savedState);
@@ -338,7 +343,7 @@ function loadState() {
 
 // Save state
 function saveState(state) {
-  localStorage.setItem("languageVillageState", JSON.stringify(state));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
 // Get current state
@@ -383,6 +388,79 @@ function spendResource(resourceName, amount) {
   }
 
   return false;
+}
+
+function getBuildingLevel(buildingId) {
+  const state = getState();
+  return state.village?.buildings?.[buildingId]?.level || 1;
+}
+
+function canUseTonePractice() {
+  return getBuildingLevel("school") >= 2;
+}
+
+function calculatePopulationCap(state) {
+  const basePopulationCap = 5;
+
+  const housePopulationCap = (state.village.placedItems || [])
+    .filter((item) => item.type === "house")
+    .reduce((total, house) => {
+      return total + (house.level || 1);
+    }, 0);
+
+  return basePopulationCap + housePopulationCap;
+}
+
+function getNextCitizenRequirement(currentPopulation) {
+  if (currentPopulation === 0) return 25;
+  if (currentPopulation === 1) return 50;
+  return 100;
+}
+
+function addKnowledgeAndCitizenProgress(knowledgeAmount, citizenProgressAmount) {
+  const state = getState();
+
+  state.resources.knowledge =
+    (state.resources.knowledge || 0) + knowledgeAmount;
+
+  if (!state.village.population) {
+    state.village.population = {
+      current: 0,
+      learnedWordsSinceLastCitizen: 0,
+      nextCitizenRequirement: 25,
+    };
+  }
+
+  const population = state.village.population;
+  const populationCap = calculatePopulationCap(state);
+  let citizensAdded = 0;
+
+  if (population.current < populationCap) {
+    population.learnedWordsSinceLastCitizen += citizenProgressAmount;
+
+    while (
+      population.current < populationCap &&
+      population.learnedWordsSinceLastCitizen >= population.nextCitizenRequirement
+    ) {
+      population.learnedWordsSinceLastCitizen -= population.nextCitizenRequirement;
+      population.current += 1;
+      citizensAdded += 1;
+      population.nextCitizenRequirement = getNextCitizenRequirement(
+        population.current,
+      );
+    }
+  }
+
+  if (population.current >= populationCap) {
+    population.learnedWordsSinceLastCitizen = 0;
+  }
+
+  saveState(state);
+
+  return {
+    citizensAdded,
+    atPopulationCap: population.current >= populationCap,
+  };
 }
 
 // Render state to page
@@ -496,7 +574,8 @@ function getNextLevelXPRequirement(state) {
 }
 // Reset game — useful during testing
 function resetGame() {
-  localStorage.removeItem("languageVillageState");
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(LEGACY_STORAGE_KEY);
   location.reload();
 }
 
