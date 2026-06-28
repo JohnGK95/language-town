@@ -778,3 +778,69 @@ td[contenteditable="true"]:focus {
 .danger-zone button:hover {
   background: #7a0106;
 }
+
+.ocean-map-tile {
+  background: #6caed6;
+}
+
+.ocean-map-tile:hover {
+  background: #84c3e6;
+}
+
+.placed-ranch {
+  background: #deb887;
+}
+
+.placed-fishing-boat {
+  background: #f5f0d8;
+  border-color: #2d6f91;
+}
+
+.product-capacity-hud {
+  display: contents;
+}
+
+.market-sale-row,
+.farm-capacity-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #ddd;
+}
+
+.product-form {
+  display: grid;
+  gap: 12px;
+}
+
+.product-form input,
+.product-form select,
+.products-page select {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  font: inherit;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.product-form label,
+.products-page label {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 12px;
+  font-weight: bold;
+}
+
+.product-form label input,
+.product-form label select,
+.products-page label input,
+.products-page label select {
+  font-weight: normal;
+}

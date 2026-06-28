@@ -51,6 +51,85 @@ function getTodayDateString() {
   return new Date().toISOString().split("T")[0];
 }
 
+function getProductAssignedDays(state, productId) {
+  const now = Date.now();
+  let totalDays = state.productSlotHistory?.[productId] || 0;
+  state.village.placedItems.filter((item) => item.type === "farm").forEach((farm) => {
+    const slots = farm.productSlots || (farm.cropSlots || []).map((cropId) => cropId ? { productKey: cropId + ":standard", assignedAt: new Date().toISOString(), accumulatedDays: 0 } : null);
+    slots.forEach((slot) => {
+      if (!slot) return;
+      const key = typeof slot === "string" ? slot : slot.productKey;
+      if (!key || key.split(":")[0] !== productId) return;
+      const assignedAt = typeof slot === "string" ? now : Date.parse(slot.assignedAt || new Date().toISOString());
+      const currentDays = Math.max(0, (now - assignedAt) / 86400000);
+      totalDays += (slot.accumulatedDays || 0) + currentDays;
+    });
+  });
+  return totalDays;
+}
+
+function hasFullyUpgradedFarm(state) {
+  return state.village.placedItems.some((item) => item.type === "farm" && (item.level || 1) >= 3);
+}
+
+function isDiscoveryPackMastered(state, product) {
+  if (!product.discoveryPack) return false;
+  const packWords = state.vocab.filter((word) => word.pack === product.discoveryPack);
+  return packWords.length > 0 && packWords.every((word) => (word.quizCorrectCount || 0) >= 5);
+}
+
+function getEligibleLuxuryProducts(state, farmer) {
+  return getProducts(state).filter((product) => {
+    return product.type === "crop" &&
+      product.luxuryName &&
+      !product.luxuryUnlocked &&
+      state.player.level >= product.luxuryUnlockLevel &&
+      (farmer.relationshipLevel || 1) >= 3 &&
+      hasFullyUpgradedFarm(state) &&
+      getProductAssignedDays(state, product.id) >= 14;
+  });
+}
+
+function renderFarmerLuxuryQuest(state, farmer) {
+  const section = document.getElementById("luxury-quest-section");
+  if (!section) return;
+  section.classList.add("hidden");
+  section.innerHTML = "";
+  if (!farmer || farmer.id !== "farmer_mei") return;
+  const eligibleProducts = getEligibleLuxuryProducts(state, farmer);
+  if (eligibleProducts.length === 0 || Math.random() > 0.5) return;
+  const product = eligibleProducts[Math.floor(Math.random() * eligibleProducts.length)];
+  const paid = product.questStarted;
+  const mastered = isDiscoveryPackMastered(state, product);
+  section.classList.remove("hidden");
+  section.innerHTML = "<hr><h3>Discovery Quest</h3><p>Farmer Mei can help you unlock " + product.luxuryName + ".</p><p>Cost: 100 knowledge. Discovery Pack: " + (product.discoveryPack || "not set") + ".</p>" + (paid ? "<p>Quest started. Master every word in the Discovery Pack to unlock the luxury crop.</p>" : "<button id=\"start-luxury-quest-btn\">Start Quest</button>") + (paid && mastered ? "<button id=\"complete-luxury-quest-btn\">Unlock Luxury Crop</button>" : "");
+  const startButton = document.getElementById("start-luxury-quest-btn");
+  if (startButton) startButton.addEventListener("click", () => startLuxuryQuest(product.id));
+  const completeButton = document.getElementById("complete-luxury-quest-btn");
+  if (completeButton) completeButton.addEventListener("click", () => completeLuxuryQuest(product.id));
+}
+
+function startLuxuryQuest(productId) {
+  const state = getState();
+  const product = state.products.find((entry) => entry.id === productId);
+  if (!product) return;
+  if ((state.resources.knowledge || 0) < 100) { document.getElementById("daily-task-message").textContent = "You need 100 knowledge to start this quest."; return; }
+  state.resources.knowledge -= 100;
+  product.questStarted = true;
+  saveState(state);
+  document.getElementById("daily-task-message").textContent = "Discovery Quest started. Master the pack to unlock " + product.luxuryName + ".";
+  renderFarmerLuxuryQuest(state, state.villagers.find((person) => person.id === "farmer_mei"));
+}
+
+function completeLuxuryQuest(productId) {
+  const state = getState();
+  const product = state.products.find((entry) => entry.id === productId);
+  if (!product || !isDiscoveryPackMastered(state, product)) return;
+  product.luxuryUnlocked = true;
+  saveState(state);
+  document.getElementById("daily-task-message").textContent = product.luxuryName + " is now available on any Farm.";
+  renderFarmerLuxuryQuest(state, state.villagers.find((person) => person.id === "farmer_mei"));
+}
 function openVillagerTalkModal(villagerId) {
   const state = getState();
 
@@ -80,6 +159,7 @@ function openVillagerTalkModal(villagerId) {
     document.getElementById("complete-daily-task-btn").disabled = false;
   }
 
+  renderFarmerLuxuryQuest(state, villager);
   document.getElementById("villager-talk-modal").classList.remove("hidden");
 }
 

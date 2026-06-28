@@ -23,7 +23,9 @@
         <a href="quiz.html">Quiz</a>
         <a href="village.html">Village</a>
         <a href="villagers.html">Villagers</a>
-              <a href="testing.html">Testing</a>
+              <a href="night-market.html">Night Market</a>
+        <a href="products.html">Products</a>
+        <a href="testing.html">Testing</a>
       </nav>
     </header>
 
@@ -119,6 +121,22 @@
 
             <button
               class="build-option-btn"
+              data-build-type="ranch"
+              onclick="selectBuildItem('ranch')"
+            >
+              Ranch
+            </button>
+
+            <button
+              class="build-option-btn"
+              data-build-type="fishingBoat"
+              onclick="selectBuildItem('fishingBoat')"
+            >
+              Fishing Boat
+            </button>
+
+            <button
+              class="build-option-btn"
               data-build-type="well"
               onclick="selectBuildItem('well')"
             >
@@ -200,6 +218,9 @@
           <p>Trade coins for wood.</p>
 
           <button id="buy-wood-btn">Buy 10 Wood for 25 Coins</button>
+
+          <h3>Sell Products</h3>
+          <div id="market-product-sales"></div>
         </div>
 
         <hr />
@@ -238,6 +259,8 @@
           <button onclick="placeItem('path')">Path</button>
           <button onclick="placeItem('well')">Well</button>
           <button onclick="placeItem('farm')">Farm</button>
+          <button onclick="placeItem('ranch')">Ranch</button>
+          <button onclick="placeItem('fishingBoat')">Fishing Boat</button>
           <button onclick="placeItem('shrine')">Shrine</button>
           <button onclick="placeItem('bench')">Bench</button>
         </div>
@@ -269,20 +292,24 @@
       <div class="modal-content">
         <button class="close-button" id="close-farm-modal">X</button>
 
-        <h2>Farm</h2>
+        <h2 id="production-modal-title">Farm</h2>
 
         <p>Level: <strong id="farm-level"></strong></p>
-        <p>Crop Slots: <strong id="farm-slots"></strong></p>
+        <p>Production Slots: <strong id="farm-slots"></strong></p>
 
         <div id="farm-crop-slots"></div>
 
         <div class="farm-capacity-box">
-          <h3>Crop Capacity</h3>
+          <h3>Product Capacity</h3>
           <p class="helper-text">
-            Crops are production capacity, not collectable inventory.
+            Products are production capacity, not collectable inventory.
           </p>
           <div id="farm-capacity-summary"></div>
         </div>
+
+        <p id="production-upgrade-cost"></p>
+
+        <button id="upgrade-production-btn">Upgrade</button>
 
         <p id="farm-message"></p>
       </div>
@@ -290,5 +317,6 @@
 
     <script src="js/state.js"></script>
     <script src="js/village.js"></script>
+    <script src="js/production.js"></script>
   </body>
 </html>

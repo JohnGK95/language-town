@@ -1,0 +1,1 @@
+document.addEventListener("DOMContentLoaded", () => { const container = document.getElementById("night-market-products"); const products = getProducts(); if (!container) return; container.innerHTML = products.map((product) => "<div><span>" + product.standardName + "</span><strong>" + (product.dishes || "No dishes yet") + "</strong></div>").join(""); });

@@ -5,6 +5,14 @@
 const STORAGE_KEY = "languageTownState";
 const LEGACY_STORAGE_KEY = "languageVillageState";
 
+const DEFAULT_PRODUCTS = [
+  { id: "rice", type: "crop", standardName: "Rice", luxuryName: "Chishang Rice", icon: "R", unlockLevel: 3, luxuryUnlockLevel: 6, standardPrice: 5, luxuryPrice: 15, luxuryCulture: 1, discoveryPack: "Rice Discovery Pack", dishes: "Braised pork rice, rice ball", luxuryUnlocked: false },
+  { id: "wheat", type: "crop", standardName: "Wheat", luxuryName: "Taiwan Wheat", icon: "W", unlockLevel: 4, luxuryUnlockLevel: 7, standardPrice: 6, luxuryPrice: 18, luxuryCulture: 1, discoveryPack: "Wheat Discovery Pack", dishes: "Scallion pancake, noodles", luxuryUnlocked: false },
+  { id: "soybean", type: "crop", standardName: "Soybean", luxuryName: "Tainan Soybean", icon: "S", unlockLevel: 5, luxuryUnlockLevel: 8, standardPrice: 7, luxuryPrice: 21, luxuryCulture: 1, discoveryPack: "Soybean Discovery Pack", dishes: "Soy milk, tofu pudding", luxuryUnlocked: false },
+  { id: "greenOnion", type: "crop", standardName: "Green Onion", luxuryName: "Yilan Sanxing Scallion", icon: "G", unlockLevel: 6, luxuryUnlockLevel: 9, standardPrice: 8, luxuryPrice: 28, luxuryCulture: 2, discoveryPack: "Yilan Green Onion Discovery Pack", dishes: "Scallion pancake, green onion bun", luxuryUnlocked: false },
+  { id: "tea", type: "crop", standardName: "Tea", luxuryName: "Alishan High Mountain Tea", icon: "T", unlockLevel: 10, luxuryUnlockLevel: 12, standardPrice: 12, luxuryPrice: 40, luxuryCulture: 3, discoveryPack: "Tea Discovery Pack", dishes: "Bubble tea, tea eggs", luxuryUnlocked: false },
+];
+
 const DEFAULT_STATE = {
   townName: "Language Town",
 
@@ -35,6 +43,12 @@ const DEFAULT_STATE = {
   },
 
   vocab: [],
+
+  products: DEFAULT_PRODUCTS,
+
+  productUnlocks: {},
+
+  productSlotHistory: {},
 
   villagers: [
     {
@@ -240,6 +254,58 @@ function savePlayerName() {
 
   document.getElementById("player-name-modal").classList.add("hidden");
 }
+function normalizeProduct(product) {
+  const normalized = {
+    id: product.id || createProductId(product.standardName || product.name || "product"),
+    type: product.type || "crop",
+    standardName: product.standardName || product.name || "Product",
+    luxuryName: product.luxuryName || "",
+    icon: product.icon || "P",
+    unlockLevel: Number(product.unlockLevel || 1),
+    luxuryUnlockLevel: Number(product.luxuryUnlockLevel || product.unlockLevel || 1),
+    standardPrice: Number(product.standardPrice || 1),
+    luxuryPrice: Number(product.luxuryPrice || product.standardPrice || 1),
+    luxuryCulture: Number(product.luxuryCulture || 0),
+    discoveryPack: product.discoveryPack || "",
+    dishes: product.dishes || "",
+    luxuryUnlocked: Boolean(product.luxuryUnlocked),
+  };
+  return normalized;
+}
+
+function createProductId(name) {
+  return String(name || "product").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "product";
+}
+
+function getProducts(state = getState()) {
+  return (state.products || []).map(normalizeProduct);
+}
+
+function saveProducts(products) {
+  const state = getState();
+  state.products = products.map(normalizeProduct);
+  saveState(state);
+}
+
+function findProduct(productId, state = getState()) {
+  return getProducts(state).find((product) => product.id === productId);
+}
+
+function getProductVariant(productKey, state = getState()) {
+  const [productId, variant = "standard"] = String(productKey || "").split(":");
+  const product = findProduct(productId, state);
+  if (!product) return null;
+  return { key: productId + ":" + variant, product, productId, variant, name: variant === "luxury" ? product.luxuryName : product.standardName, price: variant === "luxury" ? product.luxuryPrice : product.standardPrice, culture: variant === "luxury" ? product.luxuryCulture : 0 };
+}
+
+function ensureProductState(state) {
+  if (!Array.isArray(state.products)) state.products = DEFAULT_PRODUCTS.map(normalizeProduct);
+  state.products = state.products.map(normalizeProduct);
+  DEFAULT_PRODUCTS.forEach((defaultProduct) => {
+    if (!state.products.some((product) => product.id === defaultProduct.id)) state.products.push(normalizeProduct(defaultProduct));
+  });
+  if (!state.productUnlocks) state.productUnlocks = {};
+}
 // Load saved state or create new state
 function loadState() {
   const savedState =
@@ -315,6 +381,7 @@ function loadState() {
       if (!savedBuilding.width) savedBuilding.width = defaultBuilding.width;
       if (!savedBuilding.height) savedBuilding.height = defaultBuilding.height;
     });
+    ensureProductState(state);
     if (!Array.isArray(state.vocab)) {
       state.vocab = [];
     }
@@ -337,6 +404,7 @@ function loadState() {
     return state;
   }
 
+  ensureProductState(DEFAULT_STATE);
   saveState(DEFAULT_STATE);
   return DEFAULT_STATE;
 }

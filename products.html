@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Products | Language Town</title>
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <header class="top-bar">
+      <div>
+        <h1>Products</h1>
+        <p>Add crops, animals, seafood, luxury versions, prices, and Discovery Packs.</p>
+      </div>
+      <nav>
+        <a href="index.html">Home</a>
+        <a href="vocab.html">Vocabulary</a>
+        <a href="study.html">Study</a>
+        <a href="quiz.html">Quiz</a>
+        <a href="village.html">Village</a>
+        <a href="villagers.html">Villagers</a>
+        <a href="night-market.html">Night Market</a>
+        <a href="products.html">Products</a>
+        <a href="testing.html">Testing</a>
+      </nav>
+    </header>
+
+    <main class="page products-page">
+      <section class="card">
+        <h2>Add or Update Product</h2>
+        <form id="product-form" class="product-form">
+          <label>
+            Product ID
+            <input id="product-id" placeholder="greenOnion" />
+          </label>
+
+          <label>
+            Product Type
+            <select id="product-type">
+              <option value="crop">Crop / Farm</option>
+              <option value="animal">Animal / Ranch</option>
+              <option value="seafood">Seafood / Fishing Boat</option>
+            </select>
+          </label>
+
+          <label>
+            Standard Name
+            <input id="standard-name" placeholder="Green Onion" required />
+          </label>
+
+          <label>
+            Luxury or Regional Name
+            <input id="luxury-name" placeholder="Yilan Sanxing Scallion" />
+          </label>
+
+          <label>
+            Short Icon or Label
+            <input id="product-icon" placeholder="G" />
+          </label>
+
+          <label>
+            Standard Unlock Level
+            <input id="unlock-level" type="number" min="1" value="1" />
+          </label>
+
+          <label>
+            Luxury Quest Unlock Level
+            <input id="luxury-unlock-level" type="number" min="1" value="1" />
+          </label>
+
+          <label>
+            Standard Market Price
+            <input id="standard-price" type="number" min="0" value="5" />
+          </label>
+
+          <label>
+            Luxury Market Price
+            <input id="luxury-price" type="number" min="0" value="15" />
+          </label>
+
+          <label>
+            Luxury Culture Reward
+            <input id="luxury-culture" type="number" min="0" value="1" />
+          </label>
+
+          <label>
+            Discovery Pack Name
+            <input id="discovery-pack" placeholder="Yilan Green Onion Discovery Pack" />
+          </label>
+
+          <label>
+            Taiwanese Dishes
+            <input id="dishes" placeholder="Scallion pancake, green onion bun" />
+          </label>
+
+          <label class="checkbox-label">
+            <input id="luxury-unlocked" type="checkbox" />
+            Luxury version already unlocked
+          </label>
+
+          <div class="button-row">
+            <button type="submit">Save Product</button>
+            <button type="button" id="clear-product-form-btn">Clear</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Luxury Discovery Pack CSV</h2>
+        <p class="helper-text">Upload vocabulary for the selected product Discovery Pack. The pack name will be applied to every imported row.</p>
+
+        <label>
+          Product for CSV Import
+          <select id="csv-product-select"></select>
+        </label>
+
+        <label>
+          Discovery Pack CSV File
+          <input id="product-csv-input" type="file" accept=".csv" />
+        </label>
+
+        <p id="product-csv-message"></p>
+      </section>
+
+      <section class="card">
+        <h2>Product List</h2>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Standard</th>
+                <th>Luxury</th>
+                <th>Level</th>
+                <th>Prices</th>
+                <th>Discovery Pack</th>
+                <th>Dishes</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="products-table-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script src="js/state.js"></script>
+    <script src="js/products.js"></script>
+  </body>
+</html>
