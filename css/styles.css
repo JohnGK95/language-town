@@ -246,9 +246,10 @@ td[contenteditable="true"]:focus {
   background: rgba(0, 0, 0, 0.45);
 
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   padding: 20px;
+  overflow-y: auto;
 }
 
 .modal.hidden {
@@ -261,6 +262,9 @@ td[contenteditable="true"]:focus {
   border-radius: 16px;
   width: min(420px, 100%);
   position: relative;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  margin: auto 0;
 }
 
 .close-button {

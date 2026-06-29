@@ -4,6 +4,7 @@
 
 const STORAGE_KEY = "languageTownState";
 const LEGACY_STORAGE_KEY = "languageVillageState";
+let cachedState = null;
 
 const DEFAULT_PRODUCTS = [
   { id: "rice", type: "crop", standardName: "Rice", luxuryName: "Chishang Rice", icon: "R", unlockLevel: 3, luxuryUnlockLevel: 6, standardPrice: 5, luxuryPrice: 15, luxuryCulture: 1, discoveryPack: "Rice Discovery Pack", dishes: "Braised pork rice, rice ball", luxuryUnlocked: false },
@@ -366,12 +367,25 @@ function getProductionCapacity(state = getState()) {
 }
 
 function ensureProductState(state) {
-  if (!Array.isArray(state.products)) state.products = DEFAULT_PRODUCTS.map(normalizeProduct);
-  state.products = state.products.map(normalizeProduct);
+  let changed = false;
+  if (!Array.isArray(state.products)) {
+    state.products = DEFAULT_PRODUCTS.map(normalizeProduct);
+    changed = true;
+  }
+  const normalizedProducts = state.products.map(normalizeProduct);
+  if (JSON.stringify(state.products) !== JSON.stringify(normalizedProducts)) changed = true;
+  state.products = normalizedProducts;
   DEFAULT_PRODUCTS.forEach((defaultProduct) => {
-    if (!state.products.some((product) => product.id === defaultProduct.id)) state.products.push(normalizeProduct(defaultProduct));
+    if (!state.products.some((product) => product.id === defaultProduct.id)) {
+      state.products.push(normalizeProduct(defaultProduct));
+      changed = true;
+    }
   });
-  if (!state.productUnlocks) state.productUnlocks = {};
+  if (!state.productUnlocks) {
+    state.productUnlocks = {};
+    changed = true;
+  }
+  return changed;
 }
 
 function createRecipeId(name) {
@@ -403,9 +417,19 @@ function normalizeRecipe(recipe) {
 }
 
 function ensureRecipeState(state) {
-  if (!Array.isArray(state.recipes)) state.recipes = DEFAULT_RECIPES.map(normalizeRecipe);
-  state.recipes = state.recipes.map(normalizeRecipe);
-  if (!state.recipeUnlocks) state.recipeUnlocks = {};
+  let changed = false;
+  if (!Array.isArray(state.recipes)) {
+    state.recipes = DEFAULT_RECIPES.map(normalizeRecipe);
+    changed = true;
+  }
+  const normalizedRecipes = state.recipes.map(normalizeRecipe);
+  if (JSON.stringify(state.recipes) !== JSON.stringify(normalizedRecipes)) changed = true;
+  state.recipes = normalizedRecipes;
+  if (!state.recipeUnlocks) {
+    state.recipeUnlocks = {};
+    changed = true;
+  }
+  return changed;
 }
 
 function getRecipes(state = getState()) {
@@ -446,7 +470,7 @@ function getNightMarketDisplayName(item, state = getState()) {
 }
 
 function getRecipeIngredientStatus(recipe, state = getState()) {
-  const capacity = typeof getProductionCapacity === "function" ? getProductionCapacity() : {};
+  const capacity = typeof getProductionCapacity === "function" ? getProductionCapacity(state) : {};
   return recipe.ingredients.map((ingredient) => {
     const product = findProduct(ingredient.productId, state);
     const key = `${ingredient.productId}:${ingredient.variant || "standard"}`;
@@ -487,43 +511,54 @@ function getResearchedRecipes(state = getState()) {
 }
 // Load saved state or create new state
 function loadState() {
+  if (cachedState) return cachedState;
+
   const savedState =
     localStorage.getItem(STORAGE_KEY) ||
     localStorage.getItem(LEGACY_STORAGE_KEY);
 
   if (savedState) {
     const state = JSON.parse(savedState);
+    let migrated = false;
 
     if (!state.townName) {
       state.townName = "Language Town";
+      migrated = true;
     }
 
     if (!state.villagers || state.villagers.length === 0) {
       state.villagers = DEFAULT_STATE.villagers;
+      migrated = true;
     }
     state.villagers.forEach((villager) => {
       if (villager.relationshipXP === undefined) {
         villager.relationshipXP = villager.relationshipPoints || 0;
+        migrated = true;
       }
 
       if (villager.lastInteractionDate === undefined) {
         villager.lastInteractionDate = null;
+        migrated = true;
       }
 
       if (villager.dailyTaskCompleted === undefined) {
         villager.dailyTaskCompleted = false;
+        migrated = true;
       }
 
       if (villager.streak === undefined) {
         villager.streak = 0;
+        migrated = true;
       }
     });
     if (!state.village) {
       state.village = DEFAULT_STATE.village;
+      migrated = true;
     }
 
     if (!state.village.placedItems) {
       state.village.placedItems = [];
+      migrated = true;
     }
 
     if (!state.village.population) {
@@ -532,12 +567,15 @@ function loadState() {
         learnedWordsSinceLastCitizen: 0,
         nextCitizenRequirement: 25,
       };
+      migrated = true;
     }
     if (!state.player.name) {
       state.player.name = "Player";
+      migrated = true;
     }
     if (!state.village.buildings) {
       state.village.buildings = DEFAULT_STATE.village.buildings;
+      migrated = true;
     }
 
     if (!state.village.buildings.lumberMill) {
@@ -545,53 +583,108 @@ function loadState() {
         name: "Lumber Mill",
         level: 1,
       };
+      migrated = true;
     }
     Object.keys(DEFAULT_STATE.village.buildings).forEach((buildingId) => {
       if (!state.village.buildings[buildingId]) {
         state.village.buildings[buildingId] =
           DEFAULT_STATE.village.buildings[buildingId];
+        migrated = true;
       }
 
       const defaultBuilding = DEFAULT_STATE.village.buildings[buildingId];
       const savedBuilding = state.village.buildings[buildingId];
 
-      if (!savedBuilding.x) savedBuilding.x = defaultBuilding.x;
-      if (!savedBuilding.y) savedBuilding.y = defaultBuilding.y;
-      if (!savedBuilding.width) savedBuilding.width = defaultBuilding.width;
-      if (!savedBuilding.height) savedBuilding.height = defaultBuilding.height;
+      if (!savedBuilding.x) {
+        savedBuilding.x = defaultBuilding.x;
+        migrated = true;
+      }
+      if (!savedBuilding.y) {
+        savedBuilding.y = defaultBuilding.y;
+        migrated = true;
+      }
+      if (!savedBuilding.width) {
+        savedBuilding.width = defaultBuilding.width;
+        migrated = true;
+      }
+      if (!savedBuilding.height) {
+        savedBuilding.height = defaultBuilding.height;
+        migrated = true;
+      }
     });
-    ensureProductState(state);
-    ensureRecipeState(state);
+    if (ensureProductState(state)) migrated = true;
+    if (ensureRecipeState(state)) migrated = true;
     if (!Array.isArray(state.vocab)) {
       state.vocab = [];
+      migrated = true;
     }
     state.vocab.forEach((word) => {
-      if (word.language === undefined) word.language = "";
-      if (word.tonePractice === undefined) word.tonePractice = "";
-      if (word.toneDistractor1 === undefined) word.toneDistractor1 = "";
-      if (word.toneDistractor2 === undefined) word.toneDistractor2 = "";
-      if (word.toneDistractor3 === undefined) word.toneDistractor3 = "";
+      if (word.language === undefined) {
+        word.language = "";
+        migrated = true;
+      }
+      if (word.tonePractice === undefined) {
+        word.tonePractice = "";
+        migrated = true;
+      }
+      if (word.toneDistractor1 === undefined) {
+        word.toneDistractor1 = "";
+        migrated = true;
+      }
+      if (word.toneDistractor2 === undefined) {
+        word.toneDistractor2 = "";
+        migrated = true;
+      }
+      if (word.toneDistractor3 === undefined) {
+        word.toneDistractor3 = "";
+        migrated = true;
+      }
 
-      if (word.level === undefined) word.level = "";
-      if (word.pack === undefined) word.pack = "";
+      if (word.level === undefined) {
+        word.level = "";
+        migrated = true;
+      }
+      if (word.pack === undefined) {
+        word.pack = "";
+        migrated = true;
+      }
 
-      if (word.quizCorrectCount === undefined) word.quizCorrectCount = 0;
-      if (word.quizWrongCount === undefined) word.quizWrongCount = 0;
-      if (word.toneCorrectCount === undefined) word.toneCorrectCount = 0;
-      if (word.toneWrongCount === undefined) word.toneWrongCount = 0;
+      if (word.quizCorrectCount === undefined) {
+        word.quizCorrectCount = 0;
+        migrated = true;
+      }
+      if (word.quizWrongCount === undefined) {
+        word.quizWrongCount = 0;
+        migrated = true;
+      }
+      if (word.toneCorrectCount === undefined) {
+        word.toneCorrectCount = 0;
+        migrated = true;
+      }
+      if (word.toneWrongCount === undefined) {
+        word.toneWrongCount = 0;
+        migrated = true;
+      }
     });
-    saveState(state);
+    cachedState = state;
+    if (migrated) {
+      saveState(state);
+    }
     return state;
   }
 
-  ensureProductState(DEFAULT_STATE);
-  ensureRecipeState(DEFAULT_STATE);
-  saveState(DEFAULT_STATE);
-  return DEFAULT_STATE;
+  cachedState = typeof structuredClone === "function"
+    ? structuredClone(DEFAULT_STATE)
+    : JSON.parse(JSON.stringify(DEFAULT_STATE));
+  ensureProductState(cachedState);
+  ensureRecipeState(cachedState);
+  saveState(cachedState);
+  return cachedState;
 }
 
 // Save state
 function saveState(state) {
+  cachedState = state;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 

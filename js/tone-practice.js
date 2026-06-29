@@ -56,6 +56,57 @@ const MARKED_TONE_MAP = {
   Ǜ: 4,
 };
 
+const TONE_MARK_VARIANTS = {
+  ā: ["ā", "á", "ǎ", "à", "a"],
+  á: ["ā", "á", "ǎ", "à", "a"],
+  ǎ: ["ā", "á", "ǎ", "à", "a"],
+  à: ["ā", "á", "ǎ", "à", "a"],
+  ē: ["ē", "é", "ě", "è", "e"],
+  é: ["ē", "é", "ě", "è", "e"],
+  ě: ["ē", "é", "ě", "è", "e"],
+  è: ["ē", "é", "ě", "è", "e"],
+  ī: ["ī", "í", "ǐ", "ì", "i"],
+  í: ["ī", "í", "ǐ", "ì", "i"],
+  ǐ: ["ī", "í", "ǐ", "ì", "i"],
+  ì: ["ī", "í", "ǐ", "ì", "i"],
+  ō: ["ō", "ó", "ǒ", "ò", "o"],
+  ó: ["ō", "ó", "ǒ", "ò", "o"],
+  ǒ: ["ō", "ó", "ǒ", "ò", "o"],
+  ò: ["ō", "ó", "ǒ", "ò", "o"],
+  ū: ["ū", "ú", "ǔ", "ù", "u"],
+  ú: ["ū", "ú", "ǔ", "ù", "u"],
+  ǔ: ["ū", "ú", "ǔ", "ù", "u"],
+  ù: ["ū", "ú", "ǔ", "ù", "u"],
+  ǖ: ["ǖ", "ǘ", "ǚ", "ǜ", "ü"],
+  ǘ: ["ǖ", "ǘ", "ǚ", "ǜ", "ü"],
+  ǚ: ["ǖ", "ǘ", "ǚ", "ǜ", "ü"],
+  ǜ: ["ǖ", "ǘ", "ǚ", "ǜ", "ü"],
+  Ā: ["Ā", "Á", "Ǎ", "À", "A"],
+  Á: ["Ā", "Á", "Ǎ", "À", "A"],
+  Ǎ: ["Ā", "Á", "Ǎ", "À", "A"],
+  À: ["Ā", "Á", "Ǎ", "À", "A"],
+  Ē: ["Ē", "É", "Ě", "È", "E"],
+  É: ["Ē", "É", "Ě", "È", "E"],
+  Ě: ["Ē", "É", "Ě", "È", "E"],
+  È: ["Ē", "É", "Ě", "È", "E"],
+  Ī: ["Ī", "Í", "Ǐ", "Ì", "I"],
+  Í: ["Ī", "Í", "Ǐ", "Ì", "I"],
+  Ǐ: ["Ī", "Í", "Ǐ", "Ì", "I"],
+  Ì: ["Ī", "Í", "Ǐ", "Ì", "I"],
+  Ō: ["Ō", "Ó", "Ǒ", "Ò", "O"],
+  Ó: ["Ō", "Ó", "Ǒ", "Ò", "O"],
+  Ǒ: ["Ō", "Ó", "Ǒ", "Ò", "O"],
+  Ò: ["Ō", "Ó", "Ǒ", "Ò", "O"],
+  Ū: ["Ū", "Ú", "Ǔ", "Ù", "U"],
+  Ú: ["Ū", "Ú", "Ǔ", "Ù", "U"],
+  Ǔ: ["Ū", "Ú", "Ǔ", "Ù", "U"],
+  Ù: ["Ū", "Ú", "Ǔ", "Ù", "U"],
+  Ǖ: ["Ǖ", "Ǘ", "Ǚ", "Ǜ", "Ü"],
+  Ǘ: ["Ǖ", "Ǘ", "Ǚ", "Ǜ", "Ü"],
+  Ǚ: ["Ǖ", "Ǘ", "Ǚ", "Ǜ", "Ü"],
+  Ǜ: ["Ǖ", "Ǘ", "Ǚ", "Ǜ", "Ü"],
+};
+
 function populateToneFilters() {
   const state = getState();
 
@@ -127,9 +178,33 @@ function extractTonePattern(pronunciation) {
     .filter(Boolean);
 
   return syllables
-    .map(getSyllableTone)
+    .flatMap(getPinyinTokenTones)
     .filter((tone) => tone !== null)
     .join("-");
+}
+
+function getPinyinTokenTones(token) {
+  const numberedTones = token.match(/[1-5]/g);
+
+  if (numberedTones) {
+    return numberedTones;
+  }
+
+  const markedTones = [...token]
+    .map((character) =>
+      MARKED_TONE_MAP[character] ? String(MARKED_TONE_MAP[character]) : null,
+    )
+    .filter((tone) => tone !== null);
+
+  if (markedTones.length > 0) {
+    return markedTones;
+  }
+
+  if (/^[a-züv:]+$/i.test(token)) {
+    return ["5"];
+  }
+
+  return [];
 }
 
 function getSyllableTone(syllable) {
@@ -152,47 +227,113 @@ function getSyllableTone(syllable) {
   return null;
 }
 
-function formatTonePattern(pattern) {
-  return "Tone pattern " + pattern;
+function removeToneHints(pronunciation) {
+  return String(pronunciation || "")
+    .replace(/[1-5]/g, "")
+    .split("")
+    .map((character) => {
+      const variants = TONE_MARK_VARIANTS[character];
+      return variants ? variants[4] : character;
+    })
+    .join("");
 }
 
-function createToneDistractors(correctPattern) {
-  const tones = correctPattern.split("-");
-  const distractors = new Set();
+function getTonePrompt(word) {
+  const promptText = removeToneHints(word.tonePractice || word.pronunciation);
 
-  for (let i = 0; i < tones.length; i++) {
+  return promptText
+    ? `Choose the correct tones for: ${promptText}`
+    : "Choose the correct pronunciation for this word.";
+}
+
+function createNumberedToneDistractors(pronunciation, correctPattern) {
+  const candidates = [];
+
+  for (let i = 0; i < pronunciation.length; i++) {
+    const numberedTone = pronunciation[i].match(/[1-5]/);
+
+    if (!numberedTone) continue;
+
     for (let tone = 1; tone <= 5; tone++) {
       const replacement = String(tone);
 
-      if (replacement === tones[i]) continue;
+      if (replacement === numberedTone[0]) continue;
 
-      const variant = [...tones];
-      variant[i] = replacement;
-      distractors.add(variant.join("-"));
+      candidates.push(
+        pronunciation.slice(0, i) + replacement + pronunciation.slice(i + 1),
+      );
     }
   }
 
-  if (tones.length > 1) {
-    distractors.add([...tones].reverse().join("-"));
+  return candidates.filter(
+    (candidate) => extractTonePattern(candidate) !== correctPattern,
+  );
+}
+
+function createMarkedToneDistractors(pronunciation, correctPattern) {
+  const distractors = new Set();
+
+  for (let i = 0; i < pronunciation.length; i++) {
+    const character = pronunciation[i];
+    const variants = TONE_MARK_VARIANTS[character];
+
+    if (!variants) continue;
+
+    variants.forEach((replacement) => {
+      if (replacement === character) return;
+
+      const candidate =
+        pronunciation.slice(0, i) + replacement + pronunciation.slice(i + 1);
+
+      if (extractTonePattern(candidate) !== correctPattern) {
+        distractors.add(candidate);
+      }
+    });
   }
 
-  return shuffleArray([...distractors]).slice(0, 3);
+  return [...distractors];
+}
+
+function createToneDistractorLabels(pronunciation, correctPattern) {
+  return shuffleArray([
+    ...createNumberedToneDistractors(pronunciation, correctPattern),
+    ...createMarkedToneDistractors(pronunciation, correctPattern),
+  ]);
 }
 
 function getToneOptions(word) {
   const correctPattern = extractTonePattern(word.pronunciation);
+  const correctLabel = word.pronunciation;
   const customDistractors = [
     word.toneDistractor1,
     word.toneDistractor2,
     word.toneDistractor3,
   ]
-    .map(extractTonePattern)
-    .filter((pattern) => pattern && pattern !== correctPattern);
+    .map((option) => (option || "").trim())
+    .filter(
+      (option) =>
+        option &&
+        option !== correctLabel &&
+        extractTonePattern(option) &&
+        extractTonePattern(option) !== correctPattern,
+    );
 
-  const generatedDistractors = createToneDistractors(correctPattern);
-  const options = [correctPattern, ...customDistractors, ...generatedDistractors];
+  const generatedDistractors = createToneDistractorLabels(
+    correctLabel,
+    correctPattern,
+  );
+  const optionLabels = [correctLabel, ...customDistractors, ...generatedDistractors];
+  const uniqueLabels = [];
 
-  return shuffleArray([...new Set(options)].slice(0, 4));
+  optionLabels.forEach((label) => {
+    if (!uniqueLabels.includes(label)) uniqueLabels.push(label);
+  });
+
+  return shuffleArray(uniqueLabels.slice(0, 4)).map((label) => ({
+    label,
+    tonePattern: extractTonePattern(label),
+    isCorrect: extractTonePattern(label) === correctPattern,
+  }));
 }
 
 function getToneMasteryStatus(word) {
@@ -299,8 +440,7 @@ function startTonePractice() {
 
 function showToneQuestion() {
   const currentWord = toneWords[currentToneIndex];
-  const prompt =
-    currentWord.tonePractice || "Choose the correct tone pattern for this word.";
+  const prompt = getTonePrompt(currentWord);
 
   document.getElementById("current-tone-number").textContent =
     currentToneIndex + 1;
@@ -317,8 +457,9 @@ function showToneQuestion() {
 
   getToneOptions(currentWord).forEach((option) => {
     const button = document.createElement("button");
-    button.textContent = formatTonePattern(option);
-    button.dataset.tonePattern = option;
+    button.textContent = option.label;
+    button.dataset.tonePattern = option.tonePattern;
+    button.dataset.correct = option.isCorrect ? "true" : "false";
     button.addEventListener("click", () =>
       checkToneAnswer(option, currentWord, button),
     );
@@ -327,15 +468,15 @@ function showToneQuestion() {
   });
 }
 
-function checkToneAnswer(selectedPattern, correctWord, selectedButton) {
+function checkToneAnswer(selectedOption, correctWord, selectedButton) {
   const toneButtons = document.querySelectorAll("#tone-options button");
   const correctPattern = extractTonePattern(correctWord.pronunciation);
-  const isCorrect = selectedPattern === correctPattern;
+  const isCorrect = selectedOption.isCorrect;
 
   toneButtons.forEach((button) => {
     button.disabled = true;
 
-    if (button.dataset.tonePattern === correctPattern) {
+    if (button.dataset.correct === "true") {
       button.classList.add("correct-answer");
     }
   });
@@ -358,7 +499,7 @@ function checkToneAnswer(selectedPattern, correctWord, selectedButton) {
     selectedButton.classList.add("wrong-answer");
 
     document.getElementById("tone-feedback").textContent =
-      "Not quite. The correct tone pattern is shown.";
+      "Not quite. The correct pronunciation is shown.";
   }
 
   updateToneProgress(correctWord, isCorrect);

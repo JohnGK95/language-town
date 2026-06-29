@@ -1,14 +1,25 @@
 let editingIndex = null;
+const VOCAB_TABLE_LIMIT = 100;
 
 function renderVocabTable() {
   const state = getState();
   const tableBody = document.getElementById("vocab-table-body");
+  const tableStatus = document.getElementById("vocab-table-status");
 
   if (!tableBody) return;
 
   tableBody.innerHTML = "";
 
-  state.vocab.forEach((entry, index) => {
+  const visibleWords = state.vocab.slice(0, VOCAB_TABLE_LIMIT);
+
+  if (tableStatus) {
+    tableStatus.textContent =
+      state.vocab.length > VOCAB_TABLE_LIMIT
+        ? `Showing first ${VOCAB_TABLE_LIMIT} of ${state.vocab.length} words. Study and quiz tools still use your full vocabulary.`
+        : `Showing ${state.vocab.length} word${state.vocab.length === 1 ? "" : "s"}.`;
+  }
+
+  visibleWords.forEach((entry, index) => {
     const row = document.createElement("tr");
 
     row.innerHTML = `
