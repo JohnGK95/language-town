@@ -111,7 +111,33 @@ This roadmap tracks major goals, feature work, fixes, and future milestones for 
 - [ ] Add roles: player and admin/content editor.
 - [ ] Plan data privacy and backup strategy.
 
-## 10. Going Live
+## 10. Interest-Based Specialization
+
+- [ ] During player setup, ask the player to choose and rank their top hobbies or activities.
+- [ ] Let players choose around four or five interests, such as going to the gym, drinking coffee, watching anime, watching movies, music, cooking, travel, sports, gaming, or other hobbies.
+- [ ] Store the ranked interests as part of the player profile.
+- [ ] Use the player's highest-ranked interests to decide which hobby visitors appear first.
+- [ ] At later player levels, spawn a visitor near Town Hall with a thought bubble.
+- [ ] Let the visitor introduce themself and pitch a new hobby building for the village.
+- [ ] Start a related Discovery Pack when the player accepts the visitor's proposal.
+- [ ] Unlock a new villager and the related hobby building after the Discovery Pack is mastered.
+- [ ] Limit each hobby building to one copy unless a later design says otherwise.
+- [ ] Add daily collectible rewards above hobby buildings, such as floating coins above a Gym.
+- [ ] Increase hobby building reward capacity as the building levels up.
+- [ ] Build a Gym example path:
+  - [ ] Player ranks going to the gym as a top interest.
+  - [ ] A visitor appears near Town Hall at the appropriate level.
+  - [ ] The visitor asks whether the town would be interested in a Gym.
+  - [ ] The Gym Discovery Pack begins.
+  - [ ] Mastering the pack introduces The Coach as a new villager.
+  - [ ] Gym becomes available to build, with a max of one.
+  - [ ] Gym generates daily coins that appear as a floating collectible above the building.
+  - [ ] Higher Gym levels increase coin capacity.
+- [ ] In the far future, add an optional trained AI chat experience with The Coach inside the Gym interface.
+- [ ] Design other hobby buildings and villagers using the same pattern.
+- [ ] Make hobby-based content specialize language learning around the player's real interests.
+
+## 11. Going Live
 
 - [ ] Confirm GitHub Pages deployment is stable.
 - [ ] Set up a custom domain if desired.
@@ -124,7 +150,7 @@ This roadmap tracks major goals, feature work, fixes, and future milestones for 
 - [ ] Decide when the site is alpha ready.
 - [ ] Share with a small group of testers.
 
-## 11. Adding New Languages
+## 12. Adding New Languages
 
 - [ ] Decide how language should work in the game long term.
 - [ ] Separate game UI language from target study language.
@@ -136,7 +162,7 @@ This roadmap tracks major goals, feature work, fixes, and future milestones for 
 - [ ] Make content filters work by language.
 - [ ] Avoid hardcoding Mandarin-only assumptions in reusable systems.
 
-## 12. Long-Term Game Features
+## 13. Long-Term Game Features
 
 - [ ] Add quests beyond Discovery Packs.
 - [ ] Add festivals and events.
@@ -190,3 +216,12 @@ This roadmap tracks major goals, feature work, fixes, and future milestones for 
 
 - [ ] New target languages can be added without rebuilding the whole game.
 - [ ] Language-specific vocabulary, pronunciation, and practice systems are supported.
+
+### Milestone 7: Interest-Based Specialization
+
+- [ ] Player setup collects ranked interests.
+- [ ] First hobby visitor flow works.
+- [ ] First hobby Discovery Pack works.
+- [ ] First hobby villager unlock works.
+- [ ] First hobby building can be built and upgraded.
+- [ ] First hobby building generates collectible daily rewards.
