@@ -25,6 +25,7 @@
         <a href="villagers.html">Villagers</a>
               <a href="night-market.html">Night Market</a>
         <a href="products.html">Products</a>
+        <a href="recipes.html">Recipes</a>
         <a href="testing.html">Testing</a>
       </nav>
     </header>
@@ -133,6 +134,14 @@
               onclick="selectBuildItem('fishingBoat')"
             >
               Fishing Boat
+            </button>
+
+            <button
+              class="build-option-btn"
+              data-build-type="nightMarket"
+              onclick="selectBuildItem('nightMarket')"
+            >
+              Night Market
             </button>
 
             <button
@@ -261,6 +270,7 @@
           <button onclick="placeItem('farm')">Farm</button>
           <button onclick="placeItem('ranch')">Ranch</button>
           <button onclick="placeItem('fishingBoat')">Fishing Boat</button>
+          <button onclick="placeItem('nightMarket')">Night Market</button>
           <button onclick="placeItem('shrine')">Shrine</button>
           <button onclick="placeItem('bench')">Bench</button>
         </div>
@@ -312,6 +322,39 @@
         <button id="upgrade-production-btn">Upgrade</button>
 
         <p id="farm-message"></p>
+      </div>
+    </div>
+
+    <!-- Night Market Modal -->
+    <div class="modal hidden" id="night-market-modal">
+      <div class="modal-content">
+        <button class="close-button" id="close-night-market-modal">X</button>
+
+        <h2 id="night-market-modal-title">Night Market</h2>
+
+        <label>
+          Display Name
+          <input id="night-market-name-input" placeholder="Night Market name" />
+        </label>
+
+        <button id="save-night-market-name-btn">Save Name</button>
+
+        <p>Level: <strong id="night-market-level"></strong></p>
+        <p>Recipe Slots: <strong id="night-market-slots"></strong></p>
+
+        <div id="night-market-recipe-slots"></div>
+
+        <div class="farm-capacity-box">
+          <h3>Recipe Output</h3>
+          <div id="night-market-output-summary"></div>
+        </div>
+
+        <button id="collect-night-market-rewards-btn">Collect Recipe Rewards</button>
+
+        <p id="night-market-upgrade-cost"></p>
+        <button id="upgrade-night-market-btn">Upgrade</button>
+
+        <p id="night-market-message"></p>
       </div>
     </div>
 

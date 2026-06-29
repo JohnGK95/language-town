@@ -796,6 +796,15 @@ td[contenteditable="true"]:focus {
   border-color: #2d6f91;
 }
 
+.placed-night-market {
+  background: #d96c75;
+  border-color: #7a2731;
+  color: #fff;
+  font-size: 12px;
+  padding: 6px;
+  text-align: center;
+}
+
 .product-capacity-hud {
   display: contents;
 }
@@ -843,4 +852,29 @@ td[contenteditable="true"]:focus {
 .products-page label input,
 .products-page label select {
   font-weight: normal;
+}
+
+.recipe-ingredient-row {
+  display: grid;
+  grid-template-columns: minmax(140px, 1fr) 120px 90px auto;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.recipe-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.recipe-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+  background: #fffdf8;
+}
+
+.recipe-requirements p {
+  margin: 6px 0;
 }

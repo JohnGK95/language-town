@@ -13,6 +13,8 @@ const DEFAULT_PRODUCTS = [
   { id: "tea", type: "crop", standardName: "Tea", luxuryName: "Alishan High Mountain Tea", icon: "T", unlockLevel: 10, luxuryUnlockLevel: 12, standardPrice: 12, luxuryPrice: 40, luxuryCulture: 3, discoveryPack: "Tea Discovery Pack", dishes: "Bubble tea, tea eggs", luxuryUnlocked: false },
 ];
 
+const DEFAULT_RECIPES = [];
+
 const DEFAULT_STATE = {
   townName: "Language Town",
 
@@ -46,7 +48,11 @@ const DEFAULT_STATE = {
 
   products: DEFAULT_PRODUCTS,
 
+  recipes: DEFAULT_RECIPES,
+
   productUnlocks: {},
+
+  recipeUnlocks: {},
 
   productSlotHistory: {},
 
@@ -298,6 +304,67 @@ function getProductVariant(productKey, state = getState()) {
   return { key: productId + ":" + variant, product, productId, variant, name: variant === "luxury" ? product.luxuryName : product.standardName, price: variant === "luxury" ? product.luxuryPrice : product.standardPrice, culture: variant === "luxury" ? product.luxuryCulture : 0 };
 }
 
+function getPlacedItemProductSlots(item) {
+  if (!item.productSlots) {
+    item.productSlots = [];
+    if (item.cropSlots) {
+      item.productSlots = item.cropSlots.map((cropId) =>
+        cropId
+          ? {
+              productKey: String(cropId).includes(":") ? cropId : `${cropId}:standard`,
+              assignedAt: new Date().toISOString(),
+              accumulatedDays: 0,
+            }
+          : null,
+      );
+    }
+  }
+
+  return item.productSlots;
+}
+
+function getPlacedItemProductKey(slot) {
+  if (!slot) return "";
+  if (typeof slot === "string") return slot.includes(":") ? slot : `${slot}:standard`;
+  return slot.productKey || "";
+}
+
+function getProductionCapacity(state = getState()) {
+  const capacity = {};
+  const productionTypes = ["farm", "ranch", "fishingBoat"];
+
+  (state.village?.placedItems || [])
+    .filter((item) => productionTypes.includes(item.type))
+    .forEach((item) => {
+      if (!item.level) item.level = 1;
+      const slots = getPlacedItemProductSlots(item);
+
+      for (let i = 0; i < item.level; i++) {
+        const productKey = getPlacedItemProductKey(slots[i]);
+        if (!productKey) continue;
+
+        const variant = getProductVariant(productKey, state);
+        if (!variant) continue;
+
+        if (!capacity[productKey]) {
+          capacity[productKey] = {
+            productKey,
+            name: variant.name,
+            price: variant.price,
+            culture: variant.culture,
+            available: 0,
+            total: 0,
+          };
+        }
+
+        capacity[productKey].available += 1;
+        capacity[productKey].total += 1;
+      }
+    });
+
+  return capacity;
+}
+
 function ensureProductState(state) {
   if (!Array.isArray(state.products)) state.products = DEFAULT_PRODUCTS.map(normalizeProduct);
   state.products = state.products.map(normalizeProduct);
@@ -305,6 +372,118 @@ function ensureProductState(state) {
     if (!state.products.some((product) => product.id === defaultProduct.id)) state.products.push(normalizeProduct(defaultProduct));
   });
   if (!state.productUnlocks) state.productUnlocks = {};
+}
+
+function createRecipeId(name) {
+  return String(name || "recipe").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "recipe";
+}
+
+function normalizeRecipeIngredient(ingredient) {
+  return {
+    productId: ingredient.productId || "",
+    variant: ingredient.variant || "standard",
+    quantity: Number(ingredient.quantity || 1),
+  };
+}
+
+function normalizeRecipe(recipe) {
+  return {
+    id: recipe.id || createRecipeId(recipe.name || "recipe"),
+    name: recipe.name || "Recipe",
+    icon: recipe.icon || "N",
+    coins: Number(recipe.coins || 0),
+    culture: Number(recipe.culture || 0),
+    discoveryPack: recipe.discoveryPack || "",
+    ingredients: Array.isArray(recipe.ingredients)
+      ? recipe.ingredients.map(normalizeRecipeIngredient)
+      : [],
+    questStarted: Boolean(recipe.questStarted),
+    researchComplete: Boolean(recipe.researchComplete),
+  };
+}
+
+function ensureRecipeState(state) {
+  if (!Array.isArray(state.recipes)) state.recipes = DEFAULT_RECIPES.map(normalizeRecipe);
+  state.recipes = state.recipes.map(normalizeRecipe);
+  if (!state.recipeUnlocks) state.recipeUnlocks = {};
+}
+
+function getRecipes(state = getState()) {
+  ensureRecipeState(state);
+  return state.recipes;
+}
+
+function saveRecipes(recipes) {
+  const state = getState();
+  state.recipes = recipes.map(normalizeRecipe);
+  saveState(state);
+}
+
+function findRecipe(recipeId, state = getState()) {
+  return getRecipes(state).find((recipe) => recipe.id === recipeId);
+}
+
+function getMayor(state = getState()) {
+  return (state.villagers || []).find((villager) => villager.id === "mayor_elian");
+}
+
+function isPackMastered(state, packName) {
+  if (!packName) return false;
+  const packWords = (state.vocab || []).filter((word) => word.pack === packName);
+  return packWords.length > 0 && packWords.every((word) => (word.quizCorrectCount || 0) >= 5);
+}
+
+function getNightMarketPlacedItem(state = getState()) {
+  return (state.village?.placedItems || []).find((item) => item.type === "nightMarket");
+}
+
+function canUseNightMarket(state = getState()) {
+  return state.player.level >= 10 && Boolean(getNightMarketPlacedItem(state));
+}
+
+function getNightMarketDisplayName(item, state = getState()) {
+  return item?.customName || `${state.townName || "Language Town"} Night Market`;
+}
+
+function getRecipeIngredientStatus(recipe, state = getState()) {
+  const capacity = typeof getProductionCapacity === "function" ? getProductionCapacity() : {};
+  return recipe.ingredients.map((ingredient) => {
+    const product = findProduct(ingredient.productId, state);
+    const key = `${ingredient.productId}:${ingredient.variant || "standard"}`;
+    const available = capacity[key]?.available || 0;
+    const unlocked =
+      product &&
+      state.player.level >= product.unlockLevel &&
+      (ingredient.variant !== "luxury" || product.luxuryUnlocked);
+
+    return {
+      ...ingredient,
+      key,
+      product,
+      available,
+      unlocked,
+      ready: Boolean(unlocked && available >= ingredient.quantity),
+    };
+  });
+}
+
+function areRecipeIngredientsReady(recipe, state = getState()) {
+  return getRecipeIngredientStatus(recipe, state).every((ingredient) => ingredient.ready);
+}
+
+function canResearchRecipe(recipe, state = getState()) {
+  const mayor = getMayor(state);
+  return (
+    canUseNightMarket(state) &&
+    (mayor?.relationshipLevel || 1) >= 3 &&
+    recipe.questStarted &&
+    areRecipeIngredientsReady(recipe, state) &&
+    isPackMastered(state, recipe.discoveryPack)
+  );
+}
+
+function getResearchedRecipes(state = getState()) {
+  return getRecipes(state).filter((recipe) => recipe.researchComplete);
 }
 // Load saved state or create new state
 function loadState() {
@@ -382,6 +561,7 @@ function loadState() {
       if (!savedBuilding.height) savedBuilding.height = defaultBuilding.height;
     });
     ensureProductState(state);
+    ensureRecipeState(state);
     if (!Array.isArray(state.vocab)) {
       state.vocab = [];
     }
@@ -405,6 +585,7 @@ function loadState() {
   }
 
   ensureProductState(DEFAULT_STATE);
+  ensureRecipeState(DEFAULT_STATE);
   saveState(DEFAULT_STATE);
   return DEFAULT_STATE;
 }

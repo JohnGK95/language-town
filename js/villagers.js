@@ -109,6 +109,52 @@ function renderFarmerLuxuryQuest(state, farmer) {
   if (completeButton) completeButton.addEventListener("click", () => completeLuxuryQuest(product.id));
 }
 
+function getEligibleRecipeQuests(state, mayor) {
+  return getRecipes(state).filter((recipe) => {
+    return (
+      !recipe.questStarted &&
+      !recipe.researchComplete &&
+      canUseNightMarket(state) &&
+      (mayor.relationshipLevel || 1) >= 3 &&
+      areRecipeIngredientsReady(recipe, state)
+    );
+  });
+}
+
+function renderMayorRecipeQuest(state, mayor) {
+  const section = document.getElementById("luxury-quest-section");
+  if (!section) return;
+  section.classList.add("hidden");
+  section.innerHTML = "";
+  if (!mayor || mayor.id !== "mayor_elian") return;
+
+  const eligibleRecipes = getEligibleRecipeQuests(state, mayor);
+  if (eligibleRecipes.length === 0 || Math.random() > 0.5) return;
+
+  const recipe = eligibleRecipes[Math.floor(Math.random() * eligibleRecipes.length)];
+  section.classList.remove("hidden");
+  section.innerHTML =
+    "<hr><h3>Recipe Discovery Quest</h3><p>Mayor Elian can help you discover " +
+    recipe.name +
+    " for the Night Market.</p><p>Discovery Pack: " +
+    (recipe.discoveryPack || "not set") +
+    ".</p><button id=\"start-recipe-quest-btn\">Accept Quest</button>";
+
+  const startButton = document.getElementById("start-recipe-quest-btn");
+  if (startButton) startButton.addEventListener("click", () => startRecipeQuest(recipe.id));
+}
+
+function startRecipeQuest(recipeId) {
+  const state = getState();
+  const recipe = state.recipes.find((entry) => entry.id === recipeId);
+  if (!recipe) return;
+  recipe.questStarted = true;
+  saveState(state);
+  document.getElementById("daily-task-message").textContent =
+    "Recipe Discovery Quest started. Master the pack, then complete research in the Night Market.";
+  renderMayorRecipeQuest(state, state.villagers.find((person) => person.id === "mayor_elian"));
+}
+
 function startLuxuryQuest(productId) {
   const state = getState();
   const product = state.products.find((entry) => entry.id === productId);
@@ -159,7 +205,11 @@ function openVillagerTalkModal(villagerId) {
     document.getElementById("complete-daily-task-btn").disabled = false;
   }
 
-  renderFarmerLuxuryQuest(state, villager);
+  if (villager.id === "mayor_elian") {
+    renderMayorRecipeQuest(state, villager);
+  } else {
+    renderFarmerLuxuryQuest(state, villager);
+  }
   document.getElementById("villager-talk-modal").classList.remove("hidden");
 }
 

@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Recipes | Language Town</title>
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <header class="top-bar">
+      <div>
+        <h1>Recipes</h1>
+        <p>Create Night Market recipes, ingredients, rewards, and Discovery Packs.</p>
+      </div>
+      <nav>
+        <a href="index.html">Home</a>
+        <a href="vocab.html">Vocabulary</a>
+        <a href="study.html">Study</a>
+        <a href="quiz.html">Quiz</a>
+        <a href="village.html">Village</a>
+        <a href="villagers.html">Villagers</a>
+        <a href="night-market.html">Night Market</a>
+        <a href="products.html">Products</a>
+        <a href="recipes.html">Recipes</a>
+        <a href="testing.html">Testing</a>
+      </nav>
+    </header>
+
+    <main class="page products-page">
+      <section class="card">
+        <h2>Add or Update Recipe</h2>
+        <form id="recipe-form" class="product-form">
+          <label>
+            Recipe ID
+            <input id="recipe-id" placeholder="scallion-pancake" />
+          </label>
+
+          <label>
+            Recipe Name
+            <input id="recipe-name" placeholder="Scallion Pancake" required />
+          </label>
+
+          <label>
+            Short Icon or Label
+            <input id="recipe-icon" placeholder="P" />
+          </label>
+
+          <label>
+            Coin Reward
+            <input id="recipe-coins" type="number" min="0" value="25" />
+          </label>
+
+          <label>
+            Culture Reward
+            <input id="recipe-culture" type="number" min="0" value="2" />
+          </label>
+
+          <label>
+            Discovery Pack Name
+            <input id="recipe-discovery-pack" placeholder="Scallion Pancake Discovery Pack" />
+          </label>
+
+          <div>
+            <h3>Ingredients</h3>
+            <div id="recipe-ingredients"></div>
+            <button type="button" id="add-ingredient-btn">Add Ingredient</button>
+          </div>
+
+          <div class="button-row">
+            <button type="submit">Save Recipe</button>
+            <button type="button" id="clear-recipe-form-btn">Clear</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Recipe Discovery Pack CSV</h2>
+        <p class="helper-text">Upload vocabulary for the selected recipe Discovery Pack. The pack name will be applied to every imported row.</p>
+
+        <label>
+          Recipe for CSV Import
+          <select id="recipe-csv-select"></select>
+        </label>
+
+        <label>
+          Discovery Pack CSV File
+          <input id="recipe-csv-input" type="file" accept=".csv" />
+        </label>
+
+        <p id="recipe-csv-message"></p>
+      </section>
+
+      <section class="card">
+        <h2>Recipe List</h2>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Recipe</th>
+                <th>Rewards</th>
+                <th>Ingredients</th>
+                <th>Discovery Pack</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="recipes-table-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script src="js/state.js"></script>
+    <script src="js/recipes.js"></script>
+  </body>
+</html>

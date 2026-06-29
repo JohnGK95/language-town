@@ -518,10 +518,12 @@ function renderPlacedItems(state) {
 
     itemElement.classList.add("placed-item", itemData.className);
     itemElement.title = itemData.name;
-    itemElement.style.gridColumn = `${item.x} / span 1`;
-    itemElement.style.gridRow = `${item.y} / span 1`;
+    itemElement.style.gridColumn = `${item.x} / span ${item.width || 1}`;
+    itemElement.style.gridRow = `${item.y} / span ${item.height || 1}`;
 
-    if (item.type === "house") {
+    if (item.type === "nightMarket") {
+      itemElement.textContent = getNightMarketDisplayName(item, state);
+    } else if (item.type === "house") {
       itemElement.textContent = `${itemData.icon} ${item.level || 1}`;
     } else {
       itemElement.textContent = itemData.icon;
@@ -588,8 +590,8 @@ function placeItemAtTile(type, x, y) {
     return;
   }
 
-  if (isTileOccupied(x, y)) {
-    setText("builder-menu-message", "That tile is already occupied.");
+  if (!canPlaceItemAtTile(type, x, y)) {
+    setText("builder-menu-message", "That area is not available.");
     return;
   }
 
@@ -630,6 +632,12 @@ function createPlacedItem(type, x, y) {
   if (type === "farm") {
     item.level = 1;
     item.cropSlots = [];
+  }
+
+  const itemData = PLACEABLE_ITEMS[type];
+  if (itemData) {
+    item.width = itemData.width || 1;
+    item.height = itemData.height || 1;
   }
 
   return item;
@@ -731,6 +739,7 @@ function isBuildItemUnlocked(type) {
     bench: 1,
     house: 2,
     farm: 3,
+    nightMarket: 10,
     shrine: 7,
   };
 
@@ -747,6 +756,7 @@ function selectBuildItem(type) {
       house: 2,
       farm: 3,
       shrine: 7,
+      nightMarket: 10,
     };
 
     setText(
@@ -823,7 +833,7 @@ function movePlacedItemToTile(x, y) {
 
   if (!item) return;
 
-  if (isTileOccupiedForPlacedItemMove(x, y, item)) {
+  if (!canPlaceExistingItemAtTile(item, x, y)) {
     setText("builder-menu-message", "That tile is occupied.");
     return;
   }
@@ -899,7 +909,7 @@ function isTileOccupied(x, y) {
   const state = getState();
 
   const hasPlacedItem = state.village.placedItems.some((item) => {
-    return item.x === x && item.y === y;
+    return isPointInsidePlacedItem(x, y, item);
   });
 
   if (hasPlacedItem) return true;
@@ -911,7 +921,7 @@ function isTileOccupiedForMove(x, y, movingBuildingIdToIgnore) {
   const state = getState();
 
   const hasPlacedItem = state.village.placedItems.some((item) => {
-    return item.x === x && item.y === y;
+    return isPointInsidePlacedItem(x, y, item);
   });
 
   if (hasPlacedItem) return true;
@@ -936,7 +946,7 @@ function isTileOccupiedForPlacedItemMove(x, y, movingItem) {
 
     if (isSameItem) return false;
 
-    return item.x === x && item.y === y;
+    return isPointInsidePlacedItem(x, y, item);
   });
 
   if (hasPlacedItem) return true;
@@ -958,6 +968,52 @@ function isPointInsideBuilding(x, y, building) {
   const withinY = y >= building.y && y < building.y + building.height;
 
   return withinX && withinY;
+}
+
+function isPointInsidePlacedItem(x, y, item) {
+  if (!item) return false;
+
+  const width = item.width || 1;
+  const height = item.height || 1;
+  const withinX = x >= item.x && x < item.x + width;
+  const withinY = y >= item.y && y < item.y + height;
+
+  return withinX && withinY;
+}
+
+function canPlaceItemAtTile(type, x, y) {
+  const itemData = PLACEABLE_ITEMS[type];
+  const width = itemData?.width || 1;
+  const height = itemData?.height || 1;
+
+  if (x + width - 1 > MAP_WIDTH || y + height - 1 > MAP_HEIGHT) return false;
+
+  for (let tileY = y; tileY < y + height; tileY++) {
+    for (let tileX = x; tileX < x + width; tileX++) {
+      if (!isTileUnlocked(tileX, tileY) || isTileOccupied(tileX, tileY)) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+function canPlaceExistingItemAtTile(item, x, y) {
+  const width = item.width || PLACEABLE_ITEMS[item.type]?.width || 1;
+  const height = item.height || PLACEABLE_ITEMS[item.type]?.height || 1;
+
+  if (x + width - 1 > MAP_WIDTH || y + height - 1 > MAP_HEIGHT) return false;
+
+  for (let tileY = y; tileY < y + height; tileY++) {
+    for (let tileX = x; tileX < x + width; tileX++) {
+      if (!isTileUnlocked(tileX, tileY) || isTileOccupiedForPlacedItemMove(tileX, tileY, item)) {
+        return false;
+      }
+    }
+  }
+
+  return true;
 }
 
 /* ---------------------------------------
@@ -1387,8 +1443,13 @@ function placeItem(type) {
 
   if (!itemData) return;
 
-  if (isTileOccupied(selectedTile.x, selectedTile.y)) {
-    setText("build-modal-message", "That tile is already occupied.");
+  if (!isBuildItemUnlocked(type)) {
+    setText("build-modal-message", `${itemData.name} is not unlocked yet.`);
+    return;
+  }
+
+  if (!canPlaceItemAtTile(type, selectedTile.x, selectedTile.y)) {
+    setText("build-modal-message", "That area is not available.");
     return;
   }
 
